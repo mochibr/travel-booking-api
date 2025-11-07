@@ -1,0 +1,1977 @@
+openapi: 3.0.0
+info:
+  title: Vehicle Management API
+  version: 1.0.0
+  description: API for managing vehicles, services, tyres, and gallery
+
+tags:
+  - name: Vehicle Types
+    description: Vehicle type management
+  - name: Vehicles
+    description: Vehicle management
+  - name: Vehicle Services
+    description: Vehicle service management
+  - name: Vehicle Tyres
+    description: Vehicle tyre management
+  - name: Vehicle Gallery
+    description: Vehicle image gallery management
+
+paths:
+  # Vehicle Types
+  /vehicles/types:
+    post:
+      tags: [Vehicle Types]
+      summary: Create a new vehicle type
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - name
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                  description: "ID of the user"
+                name:
+                  type: string
+                  example: "Sedan"
+                  description: "Name of the vehicle type"
+                description:
+                  type: string
+                  example: "4-door passenger car"
+                  description: "Description of the vehicle type"
+      responses:
+        201:
+          description: Vehicle type created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle type created successfully"
+                  data:
+                    type: object
+                    properties:
+                      vehicleTypeId:
+                        type: integer
+                        example: 1
+        400:
+          description: Validation error
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Vehicle Types]
+      summary: Get all vehicle types with pagination and search
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: search
+          in: query
+          required: false
+          description: Search in name and description fields
+          schema:
+            type: string
+            example: "sedan"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 10
+        - name: sort_by
+          in: query
+          required: false
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [id, name, created_at, updated_at]
+            default: id
+            example: id
+        - name: sort_order
+          in: query
+          required: false
+          description: Sort order direction
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+            example: DESC
+      responses:
+        200:
+          description: List of vehicle types with pagination info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      vehicleTypes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            user_id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: "Sedan"
+                            description:
+                              type: string
+                              example: "4-door passenger car"
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      pagination:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          total_pages:
+                            type: integer
+                            example: 5
+                          total_count:
+                            type: integer
+                            example: 48
+                          has_next_page:
+                            type: boolean
+                            example: true
+                          has_prev_page:
+                            type: boolean
+                            example: false
+                          next_page:
+                            type: integer
+                            nullable: true
+                            example: 2
+                          prev_page:
+                            type: integer
+                            nullable: true
+                            example: null
+                          limit:
+                            type: integer
+                            example: 10
+        400:
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Invalid page parameter"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Failed to fetch vehicle types"
+
+  /vehicles/types/{id}:
+    get:
+      tags: [Vehicle Types]
+      summary: Get a specific vehicle type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle type details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      vehicleType:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: "Sedan"
+                          description:
+                            type: string
+                            example: "4-door passenger car"
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+        404:
+          description: Vehicle type not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Vehicle Types]
+      summary: Update a vehicle type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - name
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                name:
+                  type: string
+                  example: "SUV"
+                description:
+                  type: string
+                  example: "Sports Utility Vehicle"
+      responses:
+        200:
+          description: Vehicle type updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle type updated successfully"
+        404:
+          description: Vehicle type not found
+        401:
+          description: Unauthorized
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Vehicle Types]
+      summary: Delete a vehicle type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle type deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle type deleted successfully"
+        404:
+          description: Vehicle type not found
+        401:
+          description: Unauthorized          
+        500:
+          description: Internal server error
+
+  # Vehicles
+  /vehicles:
+    post:
+      tags: [Vehicles]
+      summary: Create a new vehicle
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - user_id
+                - vehicle_type_id
+                - make
+                - title
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                country_id:
+                  type: integer
+                  example: 1
+                state_id:
+                  type: integer
+                  example: 1
+                city_id:
+                  type: integer
+                  example: 1
+                vehicle_type_id:
+                  type: integer
+                  example: 1
+                make:
+                  type: string
+                  example: "Toyota"
+                title:
+                  type: string
+                  example: "Toyota Camry 2023"
+                model:
+                  type: string
+                  example: "Camry"
+                year_manufactured:
+                  type: integer
+                  example: 2023
+                color:
+                  type: string
+                  example: "White"
+                trim:
+                  type: string
+                  example: "LE"
+                fuel_type:
+                  type: string
+                  enum: [Petrol, Diesel, CNG, Electric, Hybrid, Other]
+                  example: "Petrol"
+                registration_number:
+                  type: string
+                  example: "ABC123"
+                chassis_number:
+                  type: string
+                  example: "1HGCM82633A123456"
+                base_location:
+                  type: string
+                  example: "New York"
+                registration_expiry_date:
+                  type: string
+                  format: date
+                  example: "2025-12-31"
+                sitting_capacity:
+                  type: integer
+                  example: 5
+                luggage_capacity:
+                  type: integer
+                  example: 2
+                speed_limit:
+                  type: integer
+                  example: 120
+                purchase_date:
+                  type: string
+                  format: date
+                  example: "2023-01-15"
+                purchase_amount:
+                  type: number
+                  format: float
+                  example: 25000.00
+                loan_price:
+                  type: number
+                  format: float
+                  example: 20000.00
+                number_of_emi_months:
+                  type: integer
+                  example: 60
+                emi_amount:
+                  type: number
+                  format: float
+                  example: 416.67
+                emi_date:
+                  type: integer
+                  example: 15
+                insurer:
+                  type: string
+                  example: "ABC Insurance"
+                insurance_policy_number:
+                  type: string
+                  example: "POL123456"
+                insurance_start_date:
+                  type: string
+                  format: date
+                  example: "2023-01-15"
+                insurance_expiry_date:
+                  type: string
+                  format: date
+                  example: "2024-01-14"
+                pollution_certificate_expiry_date:
+                  type: string
+                  format: date
+                  example: "2024-06-30"
+                fitness_expiry_date:
+                  type: string
+                  format: date
+                  example: "2024-06-30"
+                passing_expiry_date:
+                  type: string
+                  format: date
+                  example: "2024-06-30"
+                mv_tax_expiry_date:
+                  type: string
+                  format: date
+                  example: "2024-03-31"
+                auth_date_expiry:
+                  type: string
+                  format: date
+                  example: "2024-12-31"
+                odometer_reading:
+                  type: integer
+                  example: 15000
+                notes:
+                  type: string
+                  example: "Brand new vehicle"
+                feature_image:
+                  type: string
+                  format: binary
+                  description: "Vehicle feature image"
+      responses:
+        201:
+          description: Vehicle created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle created successfully"
+                  data:
+                    type: object
+                    properties:
+                      vehicleId:
+                        type: integer
+                        example: 1
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Vehicles]
+      summary: Get all vehicles with pagination and search
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: search
+          in: query
+          required: false
+          description: Search in chassis_number, make, title, model, fuel_type, registration_number
+          schema:
+            type: string
+            example: "Toyota Camry"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 10
+        - name: sort_by
+          in: query
+          required: false
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [id, make, model, year, created_at, updated_at]
+            default: id
+            example: id
+        - name: sort_order
+          in: query
+          required: false
+          description: Sort order direction
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+            example: DESC
+      responses:
+        200:
+          description: List of vehicles with pagination info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      vehicles:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            user_id:
+                              type: integer
+                              example: 1
+                            vehicle_type_id:
+                              type: integer
+                              example: 1
+                            vehicle_type_name:
+                              type: string
+                              example: "Sedan"
+                            make:
+                              type: string
+                              example: "Toyota"
+                            title:
+                              type: string
+                              example: "Toyota Camry 2023"
+                            model:
+                              type: string
+                              example: "Camry"
+                            year:
+                              type: integer
+                              example: 2023
+                            chassis_number:
+                              type: string
+                              example: "CHS123456789"
+                            fuel_type:
+                              type: string
+                              example: "Petrol"
+                            registration_number:
+                              type: string
+                              example: "ABC123"
+                            status:
+                              type: string
+                              example: "active"
+                            feature_image:
+                              type: string
+                              nullable: true
+                              example: "https://bucket.s3.region.amazonaws.com/vehicles/image.jpg"
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      pagination:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          total_pages:
+                            type: integer
+                            example: 5
+                          total_count:
+                            type: integer
+                            example: 48
+                          has_next_page:
+                            type: boolean
+                            example: true
+                          has_prev_page:
+                            type: boolean
+                            example: false
+                          next_page:
+                            type: integer
+                            nullable: true
+                            example: 2
+                          prev_page:
+                            type: integer
+                            nullable: true
+                            example: null
+                          limit:
+                            type: integer
+                            example: 10
+        400:
+          description: Invalid parameters or User ID is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "User ID is required"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Failed to fetch vehicles"
+
+  /vehicles/{id}:
+    get:
+      tags: [Vehicles]
+      summary: Get a specific vehicle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      vehicle:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          user_id:
+                            type: integer
+                            example: 1
+                          vehicle_type_id:
+                            type: integer
+                            example: 1
+                          vehicle_type_name:
+                            type: string
+                            example: "Sedan"
+                          make:
+                            type: string
+                            example: "Toyota"
+                          title:
+                            type: string
+                            example: "Toyota Camry 2023"
+                          model:
+                            type: string
+                            example: "Camry"
+                          year_manufactured:
+                            type: integer
+                            example: 2023
+                          color:
+                            type: string
+                            example: "White"
+                          fuel_type:
+                            type: string
+                            example: "Petrol"
+                          registration_number:
+                            type: string
+                            example: "ABC123"
+                          feature_image:
+                            type: string
+                            example: "https://bucket.s3.region.amazonaws.com/vehicles/image.jpg"
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+        404:
+          description: Vehicle not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Vehicles]
+      summary: Update a vehicle
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                vehicle_type_id:
+                  type: integer
+                  example: 1
+                make:
+                  type: string
+                  example: "Honda"
+                title:
+                  type: string
+                  example: "Honda Accord 2023"
+                model:
+                  type: string
+                  example: "Accord"
+                year_manufactured:
+                  type: integer
+                  example: 2023
+                color:
+                  type: string
+                  example: "Black"
+                registration_number:
+                  type: string
+                  example: "XYZ789"
+                odometer_reading:
+                  type: integer
+                  example: 20000
+                notes:
+                  type: string
+                  example: "Updated vehicle information"
+                feature_image:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Vehicle updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle updated successfully"
+        404:
+          description: Vehicle not found
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Vehicles]
+      summary: Delete a vehicle
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle deleted successfully"
+        404:
+          description: Vehicle not found
+        500:
+          description: Internal server error
+
+  # Vehicle Services
+  /vehicles/services:
+    post:
+      tags: [Vehicle Services]
+      summary: Create a new vehicle service record
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - vehicle_id
+                - service_date
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                  description: "ID of the user"
+                vehicle_id:
+                  type: integer
+                  example: 1
+                  description: "ID of the vehicle"
+                expense_id:
+                  type: integer
+                  example: 1
+                  description: "ID of the related expense (optional)"
+                odometer_reading:
+                  type: integer
+                  example: 15000
+                  description: "Odometer reading at time of service"
+                service_date:
+                  type: string
+                  format: date
+                  example: "2024-01-15"
+                  description: "Date when service was performed"
+                next_service_date:
+                  type: string
+                  format: date
+                  example: "2024-07-15"
+                  description: "Date for next scheduled service"
+                notes:
+                  type: string
+                  example: "Regular maintenance service - oil change, filter replacement"
+                  description: "Service details and notes"
+      responses:
+        201:
+          description: Vehicle service created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle service created successfully"
+                  data:
+                    type: object
+                    properties:
+                      serviceId:
+                        type: integer
+                        example: 1
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Vehicle Services]
+      summary: Get all vehicle services with search, filters and pagination
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 10
+        - name: search
+          in: query
+          required: false
+          description: Search in vehicle make, model, registration number, service notes, and user name
+          schema:
+            type: string
+            example: "oil change"
+        - name: vehicle_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: user_name
+          in: query
+          required: false
+          description: Filter by user name (partial match)
+          schema:
+            type: string
+            example: "john"
+        - name: start_date
+          in: query
+          required: false
+          description: Filter services from this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2024-01-01"
+        - name: end_date
+          in: query
+          required: false
+          description: Filter services until this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2024-12-31"
+        - name: sort_by
+          in: query
+          required: false
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [id,service_date, next_service_date, odometer_reading, created_at, user_name]
+            default: id
+            example: id
+        - name: sort_order
+          in: query
+          required: false
+          description: Sort order direction
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+            example: DESC
+      responses:
+        200:
+          description: List of all vehicle services with pagination info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      services:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            user_id:
+                              type: integer
+                              example: 1
+                            user_name:
+                              type: string
+                              example: "John Doe"
+                            vehicle_id:
+                              type: integer
+                              example: 1
+                            expense_id:
+                              type: integer
+                              nullable: true
+                              example: 1
+                            odometer_reading:
+                              type: integer
+                              example: 15000
+                            service_date:
+                              type: string
+                              format: date
+                              example: "2024-01-15"
+                            next_service_date:
+                              type: string
+                              format: date
+                              example: "2024-07-15"
+                            notes:
+                              type: string
+                              example: "Regular maintenance service - oil change, filter replacement"
+                            make:
+                              type: string
+                              example: "Toyota"
+                            model:
+                              type: string
+                              example: "Camry"
+                            registration_number:
+                              type: string
+                              example: "ABC123"
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      pagination:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                            example: 1
+                          limit:
+                            type: integer
+                            example: 10
+                          total:
+                            type: integer
+                            example: 48
+                          pages:
+                            type: integer
+                            example: 5
+        400:
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Invalid page parameter"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Failed to fetch vehicle services"
+
+  /vehicles/services/{id}:
+    get:
+      tags: [Vehicle Services]
+      summary: Get a specific vehicle service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle service details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      service:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          vehicle_id:
+                            type: integer
+                            example: 1
+                          expense_id:
+                            type: integer
+                            example: 1
+                          odometer_reading:
+                            type: integer
+                            example: 15000
+                          service_date:
+                            type: string
+                            format: date
+                            example: "2024-01-15"
+                          next_service_date:
+                            type: string
+                            format: date
+                            example: "2024-07-15"
+                          notes:
+                            type: string
+                            example: "Regular maintenance service"
+                          make:
+                            type: string
+                            example: "Toyota"
+                          model:
+                            type: string
+                            example: "Camry"
+                          registration_number:
+                            type: string
+                            example: "ABC123"
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+        404:
+          description: Vehicle service not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Vehicle Services]
+      summary: Update a vehicle service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                odometer_reading:
+                  type: integer
+                  example: 16000
+                service_date:
+                  type: string
+                  format: date
+                  example: "2024-01-16"
+                next_service_date:
+                  type: string
+                  format: date
+                  example: "2024-07-16"
+                notes:
+                  type: string
+                  example: "Updated service notes"
+      responses:
+        200:
+          description: Vehicle service updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle service updated successfully"
+        404:
+          description: Vehicle service not found
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Vehicle Services]
+      summary: Delete a vehicle service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle service deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle service deleted successfully"
+        404:
+          description: Vehicle service not found
+        500:
+          description: Internal server error
+
+  # Vehicle Tyres
+  /vehicles/tyres:
+    post:
+      tags: [Vehicle Tyres]
+      summary: Create a new vehicle tyre service record
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - vehicle_id
+                - service_date
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                  description: "ID of the user"
+                vehicle_id:
+                  type: integer
+                  example: 1
+                  description: "ID of the vehicle"
+                expense_id:
+                  type: integer
+                  example: 1
+                  description: "ID of the related expense (optional)"
+                tyre_brand:
+                  type: string
+                  example: "Michelin"
+                  description: "Brand of the tyre"
+                tyre_model:
+                  type: string
+                  example: "Primacy 4"
+                  description: "Model of the tyre"
+                tyre_serial_number:
+                  type: string
+                  example: "TYR123456789"
+                  description: "Serial number of the tyre"
+                odometer_reading:
+                  type: integer
+                  example: 15000
+                  description: "Odometer reading at time of tyre service"
+                service_date:
+                  type: string
+                  format: date
+                  example: "2024-01-15"
+                  description: "Date when tyre service was performed"
+                next_service_date:
+                  type: string
+                  format: date
+                  example: "2024-07-15"
+                  description: "Date for next scheduled tyre service"
+                notes:
+                  type: string
+                  example: "All four tyres replaced, wheel alignment done"
+                  description: "Tyre service details and notes"
+      responses:
+        201:
+          description: Vehicle tyre service created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle tyre service created successfully"
+                  data:
+                    type: object
+                    properties:
+                      tyreId:
+                        type: integer
+                        example: 1
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+    get:
+      tags: [Vehicle Tyres]
+      summary: Get all vehicle tyre services with search, filters and pagination
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 10
+        - name: search
+          in: query
+          required: false
+          description: Search in vehicle make, model, registration number, tyre brand, tyre model, serial number, notes, and user name
+          schema:
+            type: string
+            example: "michelin"
+        - name: vehicle_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: user_name
+          in: query
+          required: false
+          description: Filter by user name (partial match)
+          schema:
+            type: string
+            example: "john"
+        - name: tyre_brand
+          in: query
+          required: false
+          description: Filter by tyre brand (partial match)
+          schema:
+            type: string
+            example: "michelin"
+        - name: start_date
+          in: query
+          required: false
+          description: Filter tyre services from this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2024-01-01"
+        - name: end_date
+          in: query
+          required: false
+          description: Filter tyre services until this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+            example: "2024-12-31"
+        - name: sort_by
+          in: query
+          required: false
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [id, service_date, next_service_date, odometer_reading, created_at, user_name, tyre_brand]
+            default: id
+            example: id
+        - name: sort_order
+          in: query
+          required: false
+          description: Sort order direction
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+            example: DESC
+      responses:
+        200:
+          description: List of all vehicle tyre services with pagination info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      tyres:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            user_id:
+                              type: integer
+                              example: 1
+                            user_name:
+                              type: string
+                              example: "John Doe"
+                            vehicle_id:
+                              type: integer
+                              example: 1
+                            expense_id:
+                              type: integer
+                              nullable: true
+                              example: 1
+                            tyre_brand:
+                              type: string
+                              example: "Michelin"
+                            tyre_model:
+                              type: string
+                              example: "Primacy 4"
+                            tyre_serial_number:
+                              type: string
+                              example: "TYR123456789"
+                            odometer_reading:
+                              type: integer
+                              example: 15000
+                            service_date:
+                              type: string
+                              format: date
+                              example: "2024-01-15"
+                            next_service_date:
+                              type: string
+                              format: date
+                              example: "2024-07-15"
+                            notes:
+                              type: string
+                              example: "All four tyres replaced, wheel alignment done"
+                            make:
+                              type: string
+                              example: "Toyota"
+                            model:
+                              type: string
+                              example: "Camry"
+                            registration_number:
+                              type: string
+                              example: "ABC123"
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      pagination:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                            example: 1
+                          limit:
+                            type: integer
+                            example: 10
+                          total:
+                            type: integer
+                            example: 48
+                          pages:
+                            type: integer
+                            example: 5
+        400:
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Invalid page parameter"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Failed to fetch vehicle tyre services"
+
+  /vehicles/tyres/{id}:
+    get:
+      tags: [Vehicle Tyres]
+      summary: Get a specific vehicle tyre service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle tyre service details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      tyre:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          vehicle_id:
+                            type: integer
+                            example: 1
+                          expense_id:
+                            type: integer
+                            example: 1
+                          tyre_brand:
+                            type: string
+                            example: "Michelin"
+                          tyre_model:
+                            type: string
+                            example: "Primacy 4"
+                          tyre_serial_number:
+                            type: string
+                            example: "TYR123456789"
+                          odometer_reading:
+                            type: integer
+                            example: 15000
+                          service_date:
+                            type: string
+                            format: date
+                            example: "2024-01-15"
+                          next_service_date:
+                            type: string
+                            format: date
+                            example: "2024-07-15"
+                          notes:
+                            type: string
+                            example: "All four tyres replaced"
+                          make:
+                            type: string
+                            example: "Toyota"
+                          model:
+                            type: string
+                            example: "Camry"
+                          registration_number:
+                            type: string
+                            example: "ABC123"
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+        404:
+          description: Vehicle tyre service not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Vehicle Tyres]
+      summary: Update a vehicle tyre service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                tyre_brand:
+                  type: string
+                  example: "Bridgestone"
+                tyre_model:
+                  type: string
+                  example: "Turanza"
+                tyre_serial_number:
+                  type: string
+                  example: "TYR987654321"
+                odometer_reading:
+                  type: integer
+                  example: 16000
+                service_date:
+                  type: string
+                  format: date
+                  example: "2024-01-16"
+                next_service_date:
+                  type: string
+                  format: date
+                  example: "2024-07-16"
+                notes:
+                  type: string
+                  example: "Updated tyre service notes"
+      responses:
+        200:
+          description: Vehicle tyre service updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle tyre service updated successfully"
+        404:
+          description: Vehicle tyre service not found
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Vehicle Tyres]
+      summary: Delete a vehicle tyre service
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle tyre service deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle tyre service deleted successfully"
+        404:
+          description: Vehicle tyre service not found
+        500:
+          description: Internal server error
+
+  # Vehicle Gallery
+  /vehicles/{vehicleId}/gallery:
+    post:
+      tags: [Vehicle Gallery]
+      summary: Upload a vehicle image to gallery
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - user_id
+                - image
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                image:
+                  type: string
+                  format: binary
+                  description: "Vehicle image file"
+                alt_text:
+                  type: string
+                  example: "Front view of the vehicle"
+                  description: "Alternative text for the image"
+                sort_order:
+                  type: integer
+                  example: 1
+                  description: "Sort order for gallery display"
+      responses:
+        201:
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle image uploaded successfully"
+                  data:
+                    type: object
+                    properties:
+                      galleryId:
+                        type: integer
+                        example: 1
+                      imageUrl:
+                        type: string
+                        example: "https://bucket.s3.region.amazonaws.com/vehicles/gallery/image.jpg"
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Vehicle Gallery]
+      summary: Get vehicle gallery images
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of gallery images
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      gallery:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            vehicle_id:
+                              type: integer
+                              example: 1
+                            image_url:
+                              type: string
+                              example: "https://bucket.s3.region.amazonaws.com/vehicles/gallery/image.jpg"
+                            alt_text:
+                              type: string
+                              example: "Front view of the vehicle"
+                            sort_order:
+                              type: integer
+                              example: 1
+                            created_at:
+                              type: string
+                              format: date-time
+                            make:
+                              type: string
+                              example: "Toyota"
+                            model:
+                              type: string
+                              example: "Camry"
+                            registration_number:
+                              type: string
+                              example: "ABC123"
+        400:
+          description: User ID is required
+        500:
+          description: Internal server error
+
+  /vehicles/gallery/{id}:
+    put:
+      tags: [Vehicle Gallery]
+      summary: Update a vehicle gallery image
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                alt_text:
+                  type: string
+                  example: "Updated front view"
+                sort_order:
+                  type: integer
+                  example: 2
+      responses:
+        200:
+          description: Vehicle image updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle image updated successfully"
+        404:
+          description: Vehicle image not found
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Vehicle Gallery]
+      summary: Delete a vehicle gallery image
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle image deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle image deleted successfully"
+        404:
+          description: Vehicle image not found
+        500:
+          description: Internal server error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

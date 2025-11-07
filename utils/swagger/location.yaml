@@ -1,0 +1,122 @@
+/locations/countries:
+  get:
+    tags:
+      - Locations
+    summary: Get all countries
+    responses:
+      200:
+        description: Success
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: array
+                message:
+                  type: string
+
+/locations/countries/{id}:
+  get:
+    tags:
+      - Locations
+    summary: Get country by ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Success
+      404:
+        description: Country not found
+
+/locations/states/country/{countryId}:
+  get:
+    tags:
+      - Locations
+    summary: Get states by country ID
+    parameters:
+      - name: countryId
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Success
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: array
+                message:
+                  type: string
+
+/locations/states/{id}:
+  get:
+    tags:
+      - Locations
+    summary: Get state by ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Success
+      404:
+        description: State not found
+
+/locations/cities/state/{stateId}:
+  get:
+    tags:
+      - Locations
+    summary: Get cities by state ID
+    parameters:
+      - name: stateId
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Success
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: array
+                message:
+                  type: string
+
+/locations/cities/{id}:
+  get:
+    tags:
+      - Locations
+    summary: Get city by ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Success
+      404:
+        description: City not found

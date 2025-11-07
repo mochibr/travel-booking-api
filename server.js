@@ -1,160 +1,103 @@
 const express = require('express');
 const cors = require('cors');
-const compression = require('compression');
-const cron = require('cron');
-const swaggerUi = require('swagger-ui-express');
+const path = require('path');
+require('dotenv').config();
 
-const config = require('./config/env.config');
-const logger = require('./config/logger.config');
-const swaggerSpec = require('./config/swagger.config');
-const { testConnection, closeConnection } = require('./config/database');
-const { initializeDatabase } = require('./config/dbInit');
-const errorHandler = require('./middlewares/errorHandler');
-const { helmetConfig, apiLimiter } = require('./middlewares/security');
-const { successHandler, errorHandler: morganErrorHandler } = require('./middlewares/morgan');
-const routes = require('./routes');
-const TokenBlacklist = require('./models/TokenBlacklist');
-const ApiResponse = require('./utils/response.util');
+const authWebRoutes = require('./routes/authWebRoutes');
+const authAdminRoutes = require('./routes/authAdminRoutes');
+const vehicleRoutes = require('./routes/vehicleRoutes');
+const locationRoutes = require('./routes/locationRoutes');
+const swaggerUI = require('swagger-ui-express');
+const swaggerDocs = require('./utils/swagger');
 
 const app = express();
 
-// Trust proxy - important for rate limiting behind reverse proxy
-app.set('trust proxy', 1);
+// Body parser
+app.use(express.json());
 
-// Security middleware
-app.use(helmetConfig);
-
-// CORS configuration
-app.use(cors({
-    origin: config.cors.origin,
-    credentials: true,
-}));
-
-// Compression middleware
-app.use(compression());
-
-// Body parser middleware
+// Enable CORS
+app.use(cors());
+// app.use(cors({
+//   origin: ['http://192.168.1.29:3000'],
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   credentials: true
+// }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logging middleware
-app.use(successHandler);
-app.use(morganErrorHandler);
+// Set EJS as view engine for email templates
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-// API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    explorer: true,
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'Travel Booking API Documentation',
-}));
+// Swagger documentation
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
-// Swagger JSON endpoint
-app.get('/api-docs.json', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(swaggerSpec);
+// Routes
+app.use('/api/v1/web/auth', authWebRoutes);
+app.use('/api/v1/admin/auth', authAdminRoutes);
+app.use('/api/v1/vehicles', vehicleRoutes);
+app.use('/api/v1/locations', locationRoutes);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    success: true,
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    service: process.env.APP_NAME,
+    environment: process.env.NODE_ENV
+  });
 });
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Welcome to Travel Booking API',
-        version: '1.0.0',
-        documentation: '/api-docs',
+  res.json({
+    success: true,
+    message: `Welcome to ${process.env.APP_NAME} API`,
+    version: '1.0.0',
+    documentation: {
+      admin: `/api-docs/admin`,
+      web: `/api-docs/web`
+    }
+  });
+});
+
+// Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('🚨 Error:', error);
+
+  if (error.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      success: false,
+      error: 'File too large. Maximum size is 5MB.'
     });
+  }
+
+  if (error.message === 'Only image files are allowed') {
+    return res.status(400).json({
+      success: false,
+      error: 'Only image files are allowed for profile pictures.'
+    });
+  }
+
+  res.status(500).json({
+    success: false,
+    error: 'Internal server error'
+  });
 });
 
-// Apply rate limiting to API routes
-app.use('/api', apiLimiter);
 
-// API Routes (v1)
-app.use('/api/v1', routes);
 
-// 404 handler
-app.use((req, res) => {
-    ApiResponse.notFound(res, 'Route not found');
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log('\n🚀 Server started successfully!');
+  console.log(`📍 Port: ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🏠 App Name: ${process.env.APP_NAME}`);
+  console.log('\n📚 API Documentation:');
+  console.log(`   - Web API: http://localhost:${PORT}/api-docs/web`);
+  console.log(`   - Admin API: http://localhost:${PORT}/api-docs/admin`);
+  console.log(`\n❤️  Health Check: http://localhost:${PORT}/health`);
+  console.log('\n✅ Server is ready to handle requests...\n');
 });
-
-// Error handler (must be last)
-app.use(errorHandler);
-
-// Cleanup expired tokens daily at midnight
-const cleanupJob = new cron.CronJob('0 0 * * *', async () => {
-    try {
-        await TokenBlacklist.cleanExpired();
-        logger.info('Expired tokens cleaned up');
-    } catch (error) {
-        logger.error(`Token cleanup failed: ${error.message}`);
-    }
-});
-
-// Initialize server
-const startServer = async () => {
-    try {
-        // Test database connection
-        await testConnection();
-        
-        // Initialize database tables
-        await initializeDatabase();
-        
-        // Start cron job
-        cleanupJob.start();
-        logger.info('Scheduled jobs started');
-        
-        // Start server
-        const server = app.listen(config.port, () => {
-            logger.info(`Server running on port ${config.port}`);
-            logger.info(`Environment: ${config.env}`);
-            logger.info(`API Documentation: http://localhost:${config.port}/api-docs`);
-        });
-
-        // Graceful shutdown
-        const gracefulShutdown = async (signal) => {
-            logger.info(`${signal} received. Starting graceful shutdown...`);
-            
-            server.close(async () => {
-                logger.info('HTTP server closed');
-                
-                // Close database connection
-                await closeConnection();
-                
-                // Stop cron jobs
-                cleanupJob.stop();
-                logger.info('Cron jobs stopped');
-                
-                process.exit(0);
-            });
-
-            // Force shutdown after 30 seconds
-            setTimeout(() => {
-                logger.error('Forcing shutdown after timeout');
-                process.exit(1);
-            }, 30000);
-        };
-
-        // Handle shutdown signals
-        process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-        process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-        
-    } catch (error) {
-        logger.error(`Server initialization failed: ${error.message}`);
-        process.exit(1);
-    }
-};
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-    logger.error(`Unhandled Rejection: ${err.message}`);
-    process.exit(1);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-    logger.error(`Uncaught Exception: ${err.message}`);
-    process.exit(1);
-});
-
-startServer();
-
-module.exports = app;
-

@@ -1,0 +1,231 @@
+openapi: 3.0.0
+info:
+  title: Web Authentication API
+  version: 1.0.0
+  description: API for web user authentication operations
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+
+paths:
+  /web/auth/register:
+    post:
+      summary: User registration
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: User123!
+                phone:
+                  type: string
+                  example: +1234567890
+                address:
+                  type: string
+                  example: 123 Main St, City, Country
+      responses:
+        201:
+          description: User registered successfully
+        400:
+          description: Validation error
+
+  /web/auth/login:
+    post:
+      summary: User login
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: User123!
+      responses:
+        200:
+          description: Login successful
+        401:
+          description: Invalid credentials
+
+  /web/auth/verify-email/{token}:
+    get:
+      summary: Verify email address
+      tags: [Authentication]
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Verification token from email
+      responses:
+        200:
+          description: Email verified successfully
+        400:
+          description: Invalid token
+
+  /web/auth/forgot-password:
+    post:
+      summary: Request password reset
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+      responses:
+        200:
+          description: Reset email sent
+
+  /web/auth/reset-password/{token}:
+    post:
+      summary: Reset password
+      tags: [Authentication]
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Reset token from email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  format: password
+                  example: NewUser123!
+      responses:
+        200:
+          description: Password reset successful
+
+  /web/auth/me:
+    get:
+      summary: Get current user profile
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User profile retrieved
+
+  /web/auth/update-profile:
+    put:
+      summary: Update user profile
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                address:
+                  type: string
+                profile_picture:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Profile updated successfully
+
+  /web/auth/change-password:
+    post:
+      summary: Change password
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+                - confirmPassword
+              properties:
+                currentPassword:
+                  type: string
+                  format: password
+                newPassword:
+                  type: string
+                  format: password
+                confirmPassword:
+                  type: string
+                  format: password
+      responses:
+        200:
+          description: Password changed successfully
+
+  /web/auth/logout:
+    post:
+      summary: User logout
+      tags: [Authentication]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Logout successful
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
