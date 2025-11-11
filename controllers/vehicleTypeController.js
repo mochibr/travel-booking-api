@@ -68,13 +68,24 @@ const getVehicleTypes = async (req, res) => {
       page = 1, 
       limit = 10,
       sort_by = 'id',
-      sort_order = 'DESC'
+      sort_order = 'DESC',
+      is_deleted = 0
     } = req.query;
     
     // Convert page and limit to integers
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
-    const offset = (pageNum - 1) * limitNum;
+
+    // Convert is_deleted to integer (0 or 1)
+    const isDeleted = is_deleted !== undefined ? parseInt(is_deleted) : 0;
+
+    // Validate is_deleted parameter
+    if (isDeleted !== 0 && isDeleted !== 1) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid is_deleted parameter. Must be 0 or 1.'
+      });
+    }
 
     // Build search criteria
     const searchCriteria = {};
@@ -93,7 +104,8 @@ const getVehicleTypes = async (req, res) => {
       page: pageNum,
       limit: limitNum,
       sort_by,
-      sort_order: sort_order.toUpperCase()
+      sort_order: sort_order.toUpperCase(),
+      is_deleted: isDeleted
     });
 
     // Calculate pagination metadata
@@ -203,10 +215,62 @@ const deleteVehicleType = async (req, res) => {
   }
 };
 
+const archiveVehicleType = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const archived = await VehicleType.archive(id);
+    if (!archived) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vehicle type not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Vehicle type archived successfully'
+    });
+  } catch (error) {
+    console.error('Archive vehicle type error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to archive vehicle type'
+    });
+  }
+};
+
+const restoreVehicleType = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const restored = await VehicleType.restore(id);
+    if (!restored) {
+      return res.status(404).json({
+        success: false,
+        error: 'Vehicle type not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Vehicle type restored successfully'
+    });
+  } catch (error) {
+    console.error('Restore vehicle type error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to restore vehicle type'
+    });
+  }
+};
+
 module.exports = {
   createVehicleType,
   getVehicleTypes,
   getVehicleType,
   updateVehicleType,
-  deleteVehicleType
+  deleteVehicleType,
+  archiveVehicleType,
+  restoreVehicleType
 };

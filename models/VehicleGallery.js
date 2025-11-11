@@ -1,16 +1,45 @@
 const db = require('../config/database');
 
 class VehicleGallery {
-  static async create(galleryData) {
-    const { user_id, vehicle_id, image_url, alt_text, sort_order } = galleryData;
-    
-    const [result] = await db.execute(
-      `INSERT INTO vehicle_gallery (user_id, vehicle_id, image_url, alt_text, sort_order) 
-       VALUES (?, ?, ?, ?, ?)`,
-      [user_id, vehicle_id, image_url, alt_text, sort_order || 0]
+
+  static async getMaxSortOrder(vehicleId) {
+    const [rows] = await db.execute(
+      'SELECT MAX(sort_order) as maxSortOrder FROM vehicle_gallery WHERE vehicle_id = ?',
+      [vehicleId]
     );
+    return rows[0].maxSortOrder || 0;
+  }
+
+  static async createMultiple(galleryItems) {
+    if (galleryItems.length === 0) return [];
     
-    return result.insertId;
+    const placeholders = galleryItems.map(() => '(?, ?, ?, ?, ?)').join(', ');
+    const values = [];
+    
+    galleryItems.forEach(item => {
+      values.push(
+        item.user_id,
+        item.vehicle_id,
+        item.image_url,
+        item.alt_text || null,
+        item.sort_order || 0
+      );
+    });
+    
+    const query = `
+      INSERT INTO vehicle_gallery (user_id, vehicle_id, image_url, alt_text, sort_order) 
+      VALUES ${placeholders}
+    `;
+    
+    const [result] = await db.execute(query, values);
+    
+    // Return array of inserted IDs
+    const insertedIds = [];
+    for (let i = 0; i < galleryItems.length; i++) {
+      insertedIds.push(result.insertId + i);
+    }
+    
+    return insertedIds;
   }
 
   static async findByVehicleId(vehicleId) {
@@ -26,7 +55,6 @@ class VehicleGallery {
     return rows;
   }
 
-
   static async findById(id) {
     const query = `
       SELECT vg.*, v.make, v.model, v.registration_number 
@@ -37,30 +65,6 @@ class VehicleGallery {
     
     const [rows] = await db.execute(query, [id]);
     return rows[0];
-  }
-
-  static async update(id, updateData) {
-    const fields = [];
-    const values = [];
-
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key] !== undefined) {
-        fields.push(`${key} = ?`);
-        values.push(updateData[key]);
-      }
-    });
-
-    if (fields.length === 0) return false;
-
-    values.push(id);
-    const query = `
-      UPDATE vehicle_gallery 
-      SET ${fields.join(', ')} 
-      WHERE id = ?
-    `;
-
-    const [result] = await db.execute(query, values);
-    return result.affectedRows > 0;
   }
 
   static async delete(id) {

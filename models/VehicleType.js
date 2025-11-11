@@ -13,70 +13,99 @@ class VehicleType {
     return result.insertId;
   }
 
-  // In your VehicleType model
- static async findWithPagination({ user_id, search, page, limit, sort_by, sort_order }) {
-  let query = 'SELECT * FROM vehicle_types WHERE 1=1';
-  let countQuery = 'SELECT COUNT(*) as total_count FROM vehicle_types WHERE 1=1';
-  const params = [];
-  const countParams = [];
-
-  // Add user filter if provided
-  if (user_id) {
-    query += ' AND user_id = ?';
-    countQuery += ' AND user_id = ?';
-    params.push(user_id);
-    countParams.push(user_id);
-  }
-
-  // Add search filter if provided
-  if (search) {
-    const searchTerm = `%${search}%`;
-    query += ' AND (name LIKE ? OR description LIKE ?)';
-    countQuery += ' AND (name LIKE ? OR description LIKE ?)';
-    params.push(searchTerm, searchTerm);
-    countParams.push(searchTerm, searchTerm);
-  }
-
-  // Add sorting - allow ID sorting
-  const validSortColumns = ['id', 'name', 'created_at', 'updated_at'];
-  const sortColumn = validSortColumns.includes(sort_by) ? sort_by : 'id';
-  const order = sort_order === 'ASC' ? 'ASC' : 'DESC';
-  
-  query += ` ORDER BY ${sortColumn} ${order}`;
-
-  // Add pagination
-  query += ' LIMIT ? OFFSET ?';
-  params.push(limit, (page - 1) * limit);
-
-  try {
-    // Execute count query
-    const [countResult] = await db.execute(countQuery, countParams);
-    const totalCount = countResult[0].total_count;
-
-    // Execute data query
-    const [rows] = await db.execute(query, params);
-    
-    return {
-      vehicleTypes: rows,
-      totalCount
-    };
-  } catch (error) {
-    throw new Error(`Database error: ${error.message}`);
-  }
-}
-
-  static async findByUserId(userId) {
-    const [rows] = await db.execute(
-      'SELECT * FROM vehicle_types WHERE user_id = ? ORDER BY name',
-      [userId]
+  static async archive(id) {
+    const [result] = await db.execute(
+      'UPDATE vehicle_types SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [id]
     );
-    return rows;
+    return result.affectedRows > 0;
   }
 
-  static async findById(id) {
-    const query = 'SELECT * FROM vehicle_types WHERE id = ?';
-    const [rows] = await db.execute(query, [id]);
+  static async restore(id) {
+    const [result] = await db.execute(
+      'UPDATE vehicle_types SET is_deleted = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [id]
+    );
+    return result.affectedRows > 0;
+  }
+
+  static async findById(id, includeArchived = false) {
+    let query = 'SELECT * FROM vehicle_types WHERE id = ?';
+    const params = [id];
+    
+    if (!includeArchived) {
+      query += ' AND is_deleted = 0';
+    }
+    
+    const [rows] = await db.execute(query, params);
     return rows.length > 0 ? rows[0] : null;
+  }
+
+  static async findWithPagination({ 
+    user_id, 
+    search, 
+    page, 
+    limit, 
+    sort_by, 
+    sort_order, 
+    is_deleted = 0 
+  }) {
+    let query = 'SELECT * FROM vehicle_types WHERE 1=1';
+    let countQuery = 'SELECT COUNT(*) as total_count FROM vehicle_types WHERE 1=1';
+    const params = [];
+    const countParams = [];
+
+    // Handle archive filtering based on is_deleted parameter
+    if (is_deleted !== undefined && is_deleted !== null) {
+      query += ' AND is_deleted = ?';
+      countQuery += ' AND is_deleted = ?';
+      params.push(is_deleted);
+      countParams.push(is_deleted);
+    }
+
+    // Add user filter if provided
+    if (user_id) {
+      query += ' AND user_id = ?';
+      countQuery += ' AND user_id = ?';
+      params.push(user_id);
+      countParams.push(user_id);
+    }
+
+    // Add search filter if provided
+    if (search) {
+      const searchTerm = `%${search}%`;
+      query += ' AND (name LIKE ? OR description LIKE ?)';
+      countQuery += ' AND (name LIKE ? OR description LIKE ?)';
+      params.push(searchTerm, searchTerm);
+      countParams.push(searchTerm, searchTerm);
+    }
+
+    // Add sorting - allow ID sorting
+    const validSortColumns = ['id', 'name', 'created_at', 'updated_at'];
+    const sortColumn = validSortColumns.includes(sort_by) ? sort_by : 'id';
+    const order = sort_order === 'ASC' ? 'ASC' : 'DESC';
+    
+    query += ` ORDER BY ${sortColumn} ${order}`;
+
+    // Add pagination
+    query += ' LIMIT ? OFFSET ?';
+    params.push(limit, (page - 1) * limit);
+
+    try {
+      // Execute count query
+      const [countResult] = await db.execute(countQuery, countParams);
+      const totalCount = countResult[0].total_count;
+
+      // Execute data query
+      const [rows] = await db.execute(query, params);
+      
+      return {
+        vehicleTypes: rows,
+        totalCount
+      };
+    } catch (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
   }
 
   static async update(id, userId, updateData) {

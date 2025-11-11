@@ -11,6 +11,7 @@ const {
   validateVehicleQuery
 } = require('../middleware/vehicleValidation');
 
+const vehicleOverviewController = require('../controllers/vehicleOverviewController');
 const vehicleTypeController = require('../controllers/vehicleTypeController');
 const vehicleController = require('../controllers/vehicleController');
 const vehicleServiceController = require('../controllers/vehicleServiceController');
@@ -39,7 +40,18 @@ router.post('/types', auth('admin'), validateCreateVehicleType, vehicleTypeContr
 router.get('/types', vehicleTypeController.getVehicleTypes);
 router.get('/types/:id', vehicleTypeController.getVehicleType);
 router.put('/types/:id', auth('admin'), validateUpdateVehicleType, vehicleTypeController.updateVehicleType);
+router.put('/types/:id/archive', auth('admin'), vehicleTypeController.archiveVehicleType);
+router.put('/types/:id/restore', auth('admin'), vehicleTypeController.restoreVehicleType);
 router.delete('/types/:id', auth('admin'), vehicleTypeController.deleteVehicleType);
+
+
+// Add these routes to your existing vehicleRoutes
+router.get('/overview/types', vehicleOverviewController.getAllVehicleTypes);
+router.get('/overview/vehicles', vehicleOverviewController.getAllVehicles);
+router.delete('/:id/complete', auth('admin'), vehicleOverviewController.deleteVehicle);
+router.delete('/:vehicle_id/services', auth('admin'), vehicleOverviewController.deleteVehicleServiceByVehicleId);
+router.delete('/:vehicle_id/tyres', auth('admin'), vehicleOverviewController.deleteVehicleTyreServiceByVehicleId);
+router.delete('/:vehicle_id/gallery', auth('admin'), vehicleOverviewController.deleteVehicleGalleryByVehicleId);
 
 // Vehicle Routes
 // router.post('/',  auth('admin'), upload.single('feature_image'), validateCreateVehicle, vehicleController.createVehicle);
@@ -80,9 +92,9 @@ router.put('/:id', auth('admin'), upload.single('feature_image'), validateUpdate
 router.delete('/:id', auth('admin'), vehicleController.deleteVehicle);
 
 // Vehicle Gallery Routes
-router.post('/:vehicleId/gallery', auth('admin'), upload.single('image'), vehicleGalleryController.uploadVehicleImage);
+router.post('/:vehicleId/gallery', auth('admin'), upload.array('images', 10), vehicleGalleryController.uploadVehicleImages);
 router.get('/:vehicleId/gallery', vehicleGalleryController.getVehicleGallery);
-router.put('/gallery/:id', auth('admin'), vehicleGalleryController.updateVehicleImage);
+router.put('/:vehicleId/gallery', auth('admin'), upload.array('update_images', 20), vehicleGalleryController.updateVehicleImages);
 router.delete('/gallery/:id', auth('admin'), vehicleGalleryController.deleteVehicleImage);
 
 module.exports = router;

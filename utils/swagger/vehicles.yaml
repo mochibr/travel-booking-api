@@ -5,6 +5,8 @@ info:
   description: API for managing vehicles, services, tyres, and gallery
 
 tags:
+  - name: Vehicle Overview
+    description: Overview endpoints for vehicles and types
   - name: Vehicle Types
     description: Vehicle type management
   - name: Vehicles
@@ -17,6 +19,123 @@ tags:
     description: Vehicle image gallery management
 
 paths:
+  # Vehicle Overview Routes
+  /vehicles/overview/types:
+    get:
+      tags:
+        - Vehicle Overview
+      summary: Get all vehicle types (without pagination/filters)
+      description: Retrieve all vehicle types without pagination, search, or filters
+      responses:
+        '200':
+          description: Successfully retrieved vehicle types
+        '500':
+          description: Internal server error
+
+  /vehicles/overview/vehicles:
+    get:
+      tags:
+        - Vehicle Overview
+      summary: Get all vehicles (without pagination/filters)
+      description: Retrieve all vehicles without pagination, search, or filters
+      responses:
+        '200':
+          description: Successfully retrieved vehicles
+        '500':
+          description: Internal server error
+
+  /vehicles/{id}/complete:
+    delete:
+      tags:
+        - Vehicle Overview
+      summary: Delete a vehicle and all related data
+      security:
+        - bearerAuth: []
+      description: Delete a vehicle along with all its services, tyre services, and gallery images
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Vehicle ID
+      responses:
+        '200':
+          description: Vehicle and all related data deleted successfully
+        '404':
+          description: Vehicle not found
+        '500':
+          description: Internal server error
+
+  /vehicles/{vehicle_id}/services:
+    delete:
+      tags:
+        - Vehicle Overview
+      summary: Delete all vehicle services by vehicle ID
+      security:
+        - bearerAuth: []
+      description: Delete all service records for a specific vehicle
+      parameters:
+        - name: vehicle_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Vehicle ID
+      responses:
+        '200':
+          description: All vehicle services deleted successfully
+        '404':
+          description: Vehicle not found
+        '500':
+          description: Internal server error
+
+  /vehicles/{vehicle_id}/tyres:
+    delete:
+      tags:
+        - Vehicle Overview
+      summary: Delete all vehicle tyre services by vehicle ID
+      security:
+        - bearerAuth: []
+      description: Delete all tyre service records for a specific vehicle
+      parameters:
+        - name: vehicle_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Vehicle ID
+      responses:
+        '200':
+          description: All vehicle tyre services deleted successfully
+        '404':
+          description: Vehicle not found
+        '500':
+          description: Internal server error
+
+  /vehicles/{vehicle_id}/gallery:
+    delete:
+      tags:
+        - Vehicle Overview
+      summary: Delete all vehicle gallery images by vehicle ID
+      security:
+        - bearerAuth: []
+      description: Delete all gallery images for a specific vehicle (including S3 cleanup)
+      parameters:
+        - name: vehicle_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Vehicle ID
+      responses:
+        '200':
+          description: All vehicle gallery images deleted successfully
+        '404':
+          description: Vehicle not found
+        '500':
+          description: Internal server error
+
   # Vehicle Types
   /vehicles/types:
     post:
@@ -125,6 +244,14 @@ paths:
             enum: [ASC, DESC]
             default: DESC
             example: DESC
+        - name: is_deleted
+          in: query
+          required: false
+          description: Filter by archive status (0=active, 1=archived)
+          schema:
+            type: integer
+            enum: [0, 1]
+            example: 0
       responses:
         200:
           description: List of vehicle types with pagination info
@@ -322,7 +449,7 @@ paths:
 
     delete:
       tags: [Vehicle Types]
-      summary: Delete a vehicle type
+      summary: Permanent delete a vehicle type
       security:
         - bearerAuth: []
       parameters:
@@ -350,6 +477,74 @@ paths:
           description: Vehicle type not found
         401:
           description: Unauthorized          
+        500:
+          description: Internal server error
+          
+  /vehicles/types/{id}/archive:
+    put:
+      tags: [Vehicle Types]
+      summary: Archive a vehicle type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle type archived successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle type archived successfully"
+        404:
+          description: Vehicle type not found
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+
+  /vehicles/types/{id}/restore:
+    put:
+      tags: [Vehicle Types]
+      summary: Restore an archived vehicle type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Vehicle type restored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Vehicle type restored successfully"
+        404:
+          description: Vehicle type not found
+        401:
+          description: Unauthorized
         500:
           description: Internal server error
 
@@ -789,6 +984,18 @@ paths:
             schema:
               type: object
               properties:
+                user_id:
+                  type: integer
+                  example: 1
+                country_id:
+                  type: integer
+                  example: 1
+                state_id:
+                  type: integer
+                  example: 1
+                city_id:
+                  type: integer
+                  example: 1
                 vehicle_type_id:
                   type: integer
                   example: 1
@@ -807,9 +1014,91 @@ paths:
                 color:
                   type: string
                   example: "Black"
+                trim:
+                  type: string
+                  example: "EX"
+                fuel_type:
+                  type: string
+                  enum: [Petrol, Diesel, CNG, Electric, Hybrid, Other]
+                  example: "Petrol"
                 registration_number:
                   type: string
                   example: "XYZ789"
+                chassis_number:
+                  type: string
+                  example: "1HGCM82633A654321"
+                base_location:
+                  type: string
+                  example: "Los Angeles"
+                registration_expiry_date:
+                  type: string
+                  format: date
+                  example: "2025-12-31"
+                sitting_capacity:
+                  type: integer
+                  example: 5
+                luggage_capacity:
+                  type: integer
+                  example: 2
+                speed_limit:
+                  type: integer
+                  example: 120
+                purchase_date:
+                  type: string
+                  format: date
+                  example: "2023-01-15"
+                purchase_amount:
+                  type: number
+                  format: float
+                  example: 25000.00
+                loan_price:
+                  type: number
+                  format: float
+                  example: 20000.00
+                number_of_emi_months:
+                  type: integer
+                  example: 60
+                emi_amount:
+                  type: number
+                  format: float
+                  example: 416.67
+                emi_date:
+                  type: integer
+                  example: 15
+                insurer:
+                  type: string
+                  example: "XYZ Insurance"
+                insurance_policy_number:
+                  type: string
+                  example: "POL654321"
+                insurance_start_date:
+                  type: string
+                  format: date
+                  example: "2023-01-15"
+                insurance_expiry_date:
+                  type: string
+                  format: date
+                  example: "2024-01-14"
+                pollution_certificate_expiry_date:
+                  type: string
+                  format: date
+                  example: "2024-06-30"
+                fitness_expiry_date:
+                  type: string
+                  format: date
+                  example: "2024-06-30"
+                passing_expiry_date:
+                  type: string
+                  format: date
+                  example: "2024-06-30"
+                mv_tax_expiry_date:
+                  type: string
+                  format: date
+                  example: "2024-03-31"
+                auth_date_expiry:
+                  type: string
+                  format: date
+                  example: "2024-12-31"
                 odometer_reading:
                   type: integer
                   example: 20000
@@ -819,6 +1108,7 @@ paths:
                 feature_image:
                   type: string
                   format: binary
+                  description: "Vehicle feature image"
       responses:
         200:
           description: Vehicle updated successfully
@@ -1757,12 +2047,12 @@ paths:
           description: Vehicle tyre service not found
         500:
           description: Internal server error
-
+  
   # Vehicle Gallery
   /vehicles/{vehicleId}/gallery:
     post:
       tags: [Vehicle Gallery]
-      summary: Upload a vehicle image to gallery
+      summary: Upload multiple vehicle images to gallery
       security:
         - bearerAuth: []
       parameters:
@@ -1780,26 +2070,26 @@ paths:
               type: object
               required:
                 - user_id
-                - image
+                - images
               properties:
                 user_id:
                   type: integer
                   example: 1
-                image:
-                  type: string
-                  format: binary
-                  description: "Vehicle image file"
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: "Vehicle image files (max 10)"
                 alt_text:
-                  type: string
-                  example: "Front view of the vehicle"
-                  description: "Alternative text for the image"
-                sort_order:
-                  type: integer
-                  example: 1
-                  description: "Sort order for gallery display"
+                  type: array
+                  items:
+                    type: string
+                  description: "Alternative texts for each image"
+                  example: ["Front view", "Side view", "Interior"]
       responses:
         201:
-          description: Image uploaded successfully
+          description: Images uploaded successfully
           content:
             application/json:
               schema:
@@ -1810,16 +2100,32 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "Vehicle image uploaded successfully"
+                    example: "3 vehicle image(s) uploaded successfully"
                   data:
                     type: object
                     properties:
-                      galleryId:
-                        type: integer
-                        example: 1
-                      imageUrl:
-                        type: string
-                        example: "https://bucket.s3.region.amazonaws.com/vehicles/gallery/image.jpg"
+                      galleryIds:
+                        type: array
+                        items:
+                          type: integer
+                        example: [1, 2, 3]
+                      images:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            galleryId:
+                              type: integer
+                              example: 1
+                            imageUrl:
+                              type: string
+                              example: "https://bucket.s3.region.amazonaws.com/vehicles/gallery/image1.jpg"
+                            altText:
+                              type: string
+                              example: "Front view"
+                            sortOrder:
+                              type: integer
+                              example: 1
         400:
           description: Validation error
         500:
@@ -1886,14 +2192,17 @@ paths:
         500:
           description: Internal server error
 
-  /vehicles/gallery/{id}:
     put:
       tags: [Vehicle Gallery]
-      summary: Update a vehicle gallery image
+      summary: Update multiple vehicle gallery images
+      description: >
+        Allows updating multiple gallery items for a vehicle.
+        You can update `alt_text`, `sort_order`, and optionally replace images.
+        Each update object must include the `id` of the existing gallery record.
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: vehicleId
           in: path
           required: true
           schema:
@@ -1902,24 +2211,33 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               required:
-                - user_id
+                - gallery
               properties:
-                user_id:
-                  type: integer
-                  example: 1
-                alt_text:
+                gallery:
                   type: string
-                  example: "Updated front view"
-                sort_order:
-                  type: integer
-                  example: 2
+                  description: >
+                    JSON string representing an array of gallery update objects.
+                    Each object must include `id`, and optionally `alt_text` or `sort_order`.
+                  example: >
+                    [
+                      { "id": 12, "alt_text": "Front View", "sort_order": 1 },
+                      { "id": 13, "alt_text": "Back View", "sort_order": 2 }
+                    ]
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: >
+                    (Optional) New image files corresponding to gallery items.
+                    Match each file to the correct item by array index.
       responses:
         200:
-          description: Vehicle image updated successfully
+          description: Vehicle gallery images updated successfully
           content:
             application/json:
               schema:
@@ -1930,14 +2248,31 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "Vehicle image updated successfully"
-        404:
-          description: Vehicle image not found
+                    example: "2 vehicle image(s) updated successfully"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 12
+                        alt_text:
+                          type: string
+                          example: "Front View"
+                        sort_order:
+                          type: integer
+                          example: 1
+                        image_url:
+                          type: string
+                          nullable: true
+                          example: "https://bucket.s3.region.amazonaws.com/vehicles/gallery/image12.jpg"
         400:
-          description: Validation error
+          description: Bad request — No updates provided or invalid input
         500:
           description: Internal server error
 
+  /vehicles/gallery/{id}:
     delete:
       tags: [Vehicle Gallery]
       summary: Delete a vehicle gallery image

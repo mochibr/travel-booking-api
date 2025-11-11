@@ -1,39 +1,69 @@
 const VehicleGallery = require('../models/VehicleGallery');
 const { uploadToS3, deleteFromS3 } = require('../utils/s3Config');
+const db = require('../config/database');
 
-const uploadVehicleImage = async (req, res) => {
+const uploadVehicleImages = async (req, res) => {
   try {
     const { vehicleId } = req.params;
-    const { user_id, alt_text, sort_order } = req.body;
-
-    if (!req.file) {
+    const { user_id } = req.body;
+    
+    if (!req.files || req.files.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'Image file is required'
+        error: 'At least one image file is required'
       });
     }
 
-    // Upload image to S3
-    const imageUrl = await uploadToS3(req.file, 'travel/vehicle/gallery');
+    // Get current max sort_order for this vehicle
+    const maxSortOrder = await VehicleGallery.getMaxSortOrder(vehicleId);
+    let currentSortOrder = maxSortOrder + 1;
 
-    const galleryId = await VehicleGallery.create({
-      user_id: user_id,
-      vehicle_id: vehicleId,
-      image_url: imageUrl,
-      alt_text: alt_text || null,
-      sort_order: sort_order || 0
-    });
+    // Process alt_text array if provided
+    const altTexts = req.body.alt_text ? 
+      (Array.isArray(req.body.alt_text) ? req.body.alt_text : [req.body.alt_text]) 
+      : [];
+
+    // Upload all images to S3 and prepare gallery data
+    const galleryItems = [];
+    
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      
+      // Upload image to S3
+      const imageUrl = await uploadToS3(file, 'travel/vehicle/gallery');
+      
+      galleryItems.push({
+        user_id: user_id,
+        vehicle_id: vehicleId,
+        image_url: imageUrl,
+        alt_text: altTexts[i] || `Vehicle image ${currentSortOrder}`,
+        sort_order: currentSortOrder
+      });
+      
+      currentSortOrder++;
+    }
+
+    // Insert all gallery items
+    const galleryIds = await VehicleGallery.createMultiple(galleryItems);
 
     res.status(201).json({
       success: true,
-      message: 'Vehicle image uploaded successfully',
-      data: { galleryId, imageUrl }
+      message: `${galleryItems.length} vehicle image(s) uploaded successfully`,
+      data: {
+        galleryIds,
+        images: galleryItems.map((item, index) => ({
+          galleryId: galleryIds[index],
+          imageUrl: item.image_url,
+          altText: item.alt_text,
+          sortOrder: item.sort_order
+        }))
+      }
     });
   } catch (error) {
-    console.error('Upload vehicle image error:', error);
+    console.error('Upload vehicle images error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to upload vehicle image'
+      error: error.message || 'Failed to upload vehicle images'
     });
   }
 };
@@ -57,36 +87,77 @@ const getVehicleGallery = async (req, res) => {
   }
 };
 
-const updateVehicleImage = async (req, res) => {
+const updateVehicleImages = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { alt_text, sort_order } = req.body;
-    
-    const updateData = {};
-    if (alt_text !== undefined) updateData.alt_text = alt_text;
-    if (sort_order !== undefined) updateData.sort_order = sort_order;
+    const { vehicleId } = req.params;
+    const updates = JSON.parse(req.body.gallery || '[]');
 
-    const updated = await VehicleGallery.update(id, updateData);
-    if (!updated) {
-      return res.status(404).json({
+    if (updates.length === 0) {
+      return res.status(400).json({
         success: false,
-        error: 'Vehicle image not found'
+        error: 'No updates provided'
       });
     }
 
-    res.json({
+    const updatedItems = [];
+
+    for (let i = 0; i < updates.length; i++) {
+      const item = updates[i];
+      const file = req.files ? req.files[i] : null;
+
+      // If new image file uploaded, replace existing one
+      let newImageUrl = null;
+      if (file) {
+        newImageUrl = await uploadToS3(file, 'travel/vehicle/gallery');
+      }
+
+      const queryParts = [];
+      const values = [];
+
+      if (item.alt_text) {
+        queryParts.push('alt_text = ?');
+        values.push(item.alt_text);
+      }
+      if (item.sort_order) {
+        queryParts.push('sort_order = ?');
+        values.push(item.sort_order);
+      }
+      if (newImageUrl) {
+        queryParts.push('image_url = ?');
+        values.push(newImageUrl);
+      }
+
+      if (queryParts.length > 0) {
+        values.push(item.id, vehicleId);
+        const query = `
+          UPDATE vehicle_gallery 
+          SET ${queryParts.join(', ')} 
+          WHERE id = ? AND vehicle_id = ?
+        `;
+        await db.execute(query, values);
+      }
+
+      updatedItems.push({
+        id: item.id,
+        alt_text: item.alt_text || null,
+        sort_order: item.sort_order || null,
+        image_url: newImageUrl || null
+      });
+    }
+
+    res.status(200).json({
       success: true,
-      message: 'Vehicle image updated successfully'
+      message: `${updatedItems.length} vehicle image(s) updated successfully`,
+      data: updatedItems
     });
   } catch (error) {
-    console.error('Update vehicle image error:', error);
+    console.error('Update vehicle images error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to update vehicle image'
+      error: error.message || 'Failed to update vehicle images'
     });
   }
 };
-
 
 const deleteVehicleImage = async (req, res) => {
   try {
@@ -126,8 +197,8 @@ const deleteVehicleImage = async (req, res) => {
 };
 
 module.exports = {
-  uploadVehicleImage,
+  uploadVehicleImages,
   getVehicleGallery,
-  updateVehicleImage,
+  updateVehicleImages,
   deleteVehicleImage
 };
