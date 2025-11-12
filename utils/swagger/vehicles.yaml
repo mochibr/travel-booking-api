@@ -2192,17 +2192,14 @@ paths:
         500:
           description: Internal server error
 
+  /vehicles/gallery/{id}:
     put:
       tags: [Vehicle Gallery]
-      summary: Update multiple vehicle gallery images
-      description: >
-        Allows updating multiple gallery items for a vehicle.
-        You can update `alt_text`, `sort_order`, and optionally replace images.
-        Each update object must include the `id` of the existing gallery record.
+      summary: Update a vehicle gallery image
       security:
         - bearerAuth: []
       parameters:
-        - name: vehicleId
+        - name: id
           in: path
           required: true
           schema:
@@ -2214,30 +2211,23 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              required:
-                - gallery
               properties:
-                gallery:
+                user_id:
+                  type: integer
+                  example: 1
+                alt_text:
                   type: string
-                  description: >
-                    JSON string representing an array of gallery update objects.
-                    Each object must include `id`, and optionally `alt_text` or `sort_order`.
-                  example: >
-                    [
-                      { "id": 12, "alt_text": "Front View", "sort_order": 1 },
-                      { "id": 13, "alt_text": "Back View", "sort_order": 2 }
-                    ]
-                images:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  description: >
-                    (Optional) New image files corresponding to gallery items.
-                    Match each file to the correct item by array index.
+                  example: "Updated front view"
+                sort_order:
+                  type: integer
+                  example: 2
+                image:
+                  type: string
+                  format: binary
+                  description: "New image file (optional)"
       responses:
         200:
-          description: Vehicle gallery images updated successfully
+          description: Vehicle image updated successfully
           content:
             application/json:
               schema:
@@ -2248,31 +2238,14 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "2 vehicle image(s) updated successfully"
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          example: 12
-                        alt_text:
-                          type: string
-                          example: "Front View"
-                        sort_order:
-                          type: integer
-                          example: 1
-                        image_url:
-                          type: string
-                          nullable: true
-                          example: "https://bucket.s3.region.amazonaws.com/vehicles/gallery/image12.jpg"
+                    example: "Vehicle image updated successfully"
+        404:
+          description: Vehicle image not found
         400:
-          description: Bad request — No updates provided or invalid input
+          description: Validation error
         500:
           description: Internal server error
 
-  /vehicles/gallery/{id}:
     delete:
       tags: [Vehicle Gallery]
       summary: Delete a vehicle gallery image

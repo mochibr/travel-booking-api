@@ -1,6 +1,5 @@
 const VehicleGallery = require('../models/VehicleGallery');
 const { uploadToS3, deleteFromS3 } = require('../utils/s3Config');
-const db = require('../config/database');
 
 const uploadVehicleImages = async (req, res) => {
   try {
@@ -87,74 +86,46 @@ const getVehicleGallery = async (req, res) => {
   }
 };
 
-const updateVehicleImages = async (req, res) => {
+const updateVehicleImage = async (req, res) => {
   try {
-    const { vehicleId } = req.params;
-    const updates = JSON.parse(req.body.gallery || '[]');
+    const { id } = req.params;
+    const { alt_text, sort_order } = req.body;
+    
+    const updateData = {};
+    if (alt_text !== undefined) updateData.alt_text = alt_text;
+    if (sort_order !== undefined) updateData.sort_order = sort_order;
 
-    if (updates.length === 0) {
-      return res.status(400).json({
+    // Check if a new image file is provided
+    if (req.file) {
+      // Get the current image to delete from S3
+      const currentImage = await VehicleGallery.findById(id);
+      if (currentImage && currentImage.image_url) {
+        // Delete old image from S3
+        await deleteFromS3(currentImage.image_url);
+      }
+
+      // Upload new image to S3
+      const newImageUrl = await uploadToS3(req.file, 'travel/vehicle/gallery');
+      updateData.image_url = newImageUrl;
+    }
+
+    const updated = await VehicleGallery.update(id, updateData);
+    if (!updated) {
+      return res.status(404).json({
         success: false,
-        error: 'No updates provided'
+        error: 'Vehicle image not found'
       });
     }
 
-    const updatedItems = [];
-
-    for (let i = 0; i < updates.length; i++) {
-      const item = updates[i];
-      const file = req.files ? req.files[i] : null;
-
-      // If new image file uploaded, replace existing one
-      let newImageUrl = null;
-      if (file) {
-        newImageUrl = await uploadToS3(file, 'travel/vehicle/gallery');
-      }
-
-      const queryParts = [];
-      const values = [];
-
-      if (item.alt_text) {
-        queryParts.push('alt_text = ?');
-        values.push(item.alt_text);
-      }
-      if (item.sort_order) {
-        queryParts.push('sort_order = ?');
-        values.push(item.sort_order);
-      }
-      if (newImageUrl) {
-        queryParts.push('image_url = ?');
-        values.push(newImageUrl);
-      }
-
-      if (queryParts.length > 0) {
-        values.push(item.id, vehicleId);
-        const query = `
-          UPDATE vehicle_gallery 
-          SET ${queryParts.join(', ')} 
-          WHERE id = ? AND vehicle_id = ?
-        `;
-        await db.execute(query, values);
-      }
-
-      updatedItems.push({
-        id: item.id,
-        alt_text: item.alt_text || null,
-        sort_order: item.sort_order || null,
-        image_url: newImageUrl || null
-      });
-    }
-
-    res.status(200).json({
+    res.json({
       success: true,
-      message: `${updatedItems.length} vehicle image(s) updated successfully`,
-      data: updatedItems
+      message: 'Vehicle image updated successfully'
     });
   } catch (error) {
-    console.error('Update vehicle images error:', error);
+    console.error('Update vehicle image error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to update vehicle images'
+      error: error.message || 'Failed to update vehicle image'
     });
   }
 };
@@ -199,6 +170,6 @@ const deleteVehicleImage = async (req, res) => {
 module.exports = {
   uploadVehicleImages,
   getVehicleGallery,
-  updateVehicleImages,
+  updateVehicleImage,
   deleteVehicleImage
 };

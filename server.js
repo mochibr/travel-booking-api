@@ -6,6 +6,7 @@ require('dotenv').config();
 const authWebRoutes = require('./routes/authWebRoutes');
 const authAdminRoutes = require('./routes/authAdminRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
+const hotelRoutes = require('./routes/hotelRoutes');
 const locationRoutes = require('./routes/locationRoutes');
 const swaggerUI = require('swagger-ui-express');
 const swaggerDocs = require('./utils/swagger');
@@ -36,6 +37,7 @@ app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 app.use('/api/v1/web/auth', authWebRoutes);
 app.use('/api/v1/admin/auth', authAdminRoutes);
 app.use('/api/v1/vehicles', vehicleRoutes);
+app.use('/api/v1/hotels', hotelRoutes);
 app.use('/api/v1/locations', locationRoutes);
 
 // Health check endpoint

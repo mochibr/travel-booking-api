@@ -67,6 +67,27 @@ class VehicleGallery {
     return rows[0];
   }
 
+  static async update(id, updateData) {
+    if (Object.keys(updateData).length === 0) {
+      return false;
+    }
+
+    const setClause = Object.keys(updateData)
+      .map(key => `${key} = ?`)
+      .join(', ');
+    
+    const values = [...Object.values(updateData), id];
+    
+    const [result] = await db.execute(
+      `UPDATE vehicle_gallery 
+      SET ${setClause}, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = ?`,
+      values
+    );
+    
+    return result.affectedRows > 0;
+  }
+
   static async delete(id) {
     const [result] = await db.execute(
       `DELETE FROM vehicle_gallery 

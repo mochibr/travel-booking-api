@@ -1,0 +1,2370 @@
+openapi: 3.0.0
+info:
+  title: Hotel Management API
+  version: 1.0.0
+  description: Complete API for managing hotels, rooms, amenities, and related entities
+
+tags:
+  - name: Hotel Types
+    description: Hotel type management
+  - name: Hotels
+    description: Hotel management
+  - name: Hotel Nearby
+    description: Nearby places management
+  - name: Hotel Nearby Gallery
+    description: Nearby places gallery management
+  - name: Hotel Rules
+    description: Hotel rules management
+  - name: Hotel Gallery
+    description: Hotel image gallery management
+  - name: Hotel Feature Types
+    description: Hotel feature type management
+  - name: Hotel Features
+    description: Hotel features management
+  - name: Hotel Bed Types
+    description: Hotel bed type management
+  - name: Hotel View Types
+    description: Hotel view type management
+  - name: Hotel Room Types
+    description: Hotel room type management
+  - name: Hotel Room Type Gallery
+    description: Hotel room type gallery management
+  - name: Hotel Rooms
+    description: Hotel room management
+  - name: Hotel Amenities
+    description: Hotel amenity management
+  - name: Hotel Room Amenities
+    description: Hotel room amenity management
+
+paths:
+  # Hotel Types
+  /hotels/types:
+    post:
+      tags: [Hotel Types]
+      summary: Create a new hotel type
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - name
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                name:
+                  type: string
+                  example: "Luxury Hotel"
+      responses:
+        201:
+          description: Hotel type created successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Hotel Types]
+      summary: Get all hotel types with pagination and search
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "luxury"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            example: 10
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "id"
+            example: "id"
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "DESC"
+            example: "DESC"
+        - name: is_deleted
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 0
+      responses:
+        200:
+          description: List of hotel types
+        400:
+          description: Invalid parameters
+        500:
+          description: Internal server error
+
+  /hotels/types/{id}:
+    get:
+      tags: [Hotel Types]
+      summary: Get a specific hotel type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Hotel type details
+        404:
+          description: Hotel type not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Hotel Types]
+      summary: Update a hotel type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Premium Hotel"
+      responses:
+        200:
+          description: Hotel type updated successfully
+        404:
+          description: Hotel type not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Hotel Types]
+      summary: Delete a hotel type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Hotel type deleted successfully
+        404:
+          description: Hotel type not found
+        500:
+          description: Internal server error
+
+  /hotels/types/{id}/archive:
+    put:
+      tags: [Hotel Types]
+      summary: Archive a hotel type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Hotel type archived successfully
+        404:
+          description: Hotel type not found
+        500:
+          description: Internal server error
+
+  /hotels/types/{id}/restore:
+    put:
+      tags: [Hotel Types]
+      summary: Restore a hotel type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Hotel type restored successfully
+        404:
+          description: Hotel type not found
+        500:
+          description: Internal server error
+
+  # Hotels
+  /hotels:
+    post:
+      tags: [Hotels]
+      summary: Create a new hotel
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - user_id
+                - name
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                country_id:
+                  type: integer
+                  example: 1
+                state_id:
+                  type: integer
+                  example: 1
+                city_id:
+                  type: integer
+                  example: 1
+                hotel_type_id:
+                  type: integer
+                  example: 1
+                logo_image:
+                  type: string
+                  format: binary
+                name:
+                  type: string
+                  example: "Grand Luxury Hotel"
+                sub_title:
+                  type: string
+                  example: "5 Star Luxury Experience"
+                address:
+                  type: string
+                  example: "123 Main Street"
+                city:
+                  type: string
+                  example: "New York"
+                country:
+                  type: string
+                  example: "USA"
+                phone_number:
+                  type: string
+                  example: "+1-234-567-8900"
+                email:
+                  type: string
+                  example: "info@grandluxury.com"
+                description:
+                  type: string
+                  example: "Luxury hotel with premium amenities"
+                latitude:
+                  type: number
+                  format: float
+                  example: 40.7128
+                longitude:
+                  type: number
+                  format: float
+                  example: -74.0060
+                rating:
+                  type: integer
+                  example: 5
+                terms_and_conditions:
+                  type: string
+                  example: "Check-in: 3 PM, Check-out: 12 PM"
+      responses:
+        201:
+          description: Hotel created successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Hotels]
+      summary: Get all hotels with pagination and search
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: hotel_type_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "luxury"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            example: 10
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "id"
+            example: "id"
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "DESC"
+            example: "DESC"
+      responses:
+        200:
+          description: List of hotels
+        400:
+          description: Invalid parameters
+        500:
+          description: Internal server error
+
+  /hotels/{id}:
+    get:
+      tags: [Hotels]
+      summary: Get a specific hotel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Hotel details
+        404:
+          description: Hotel not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Hotels]
+      summary: Update a hotel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                country_id:
+                  type: integer
+                  example: 1
+                state_id:
+                  type: integer
+                  example: 1
+                city_id:
+                  type: integer
+                  example: 1
+                hotel_type_id:
+                  type: integer
+                  example: 1
+                logo_image:
+                  type: string
+                  format: binary
+                name:
+                  type: string
+                  example: "Updated Hotel Name"
+                sub_title:
+                  type: string
+                  example: "Updated Subtitle"
+                address:
+                  type: string
+                  example: "456 Updated Street"
+                city:
+                  type: string
+                  example: "Los Angeles"
+                country:
+                  type: string
+                  example: "USA"
+                phone_number:
+                  type: string
+                  example: "+1-234-567-8901"
+                email:
+                  type: string
+                  example: "updated@hotel.com"
+                description:
+                  type: string
+                  example: "Updated description"
+                latitude:
+                  type: number
+                  format: float
+                  example: 34.0522
+                longitude:
+                  type: number
+                  format: float
+                  example: -118.2437
+                rating:
+                  type: integer
+                  example: 4
+                terms_and_conditions:
+                  type: string
+                  example: "Updated terms and conditions"
+      responses:
+        200:
+          description: Hotel updated successfully
+        404:
+          description: Hotel not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Hotels]
+      summary: Delete a hotel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Hotel deleted successfully
+        404:
+          description: Hotel not found
+        500:
+          description: Internal server error
+
+  # Hotel Nearby
+  /hotels/nearby:
+    post:
+      tags: [Hotel Nearby]
+      summary: Create a new nearby place
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - hotel_id
+                - title
+              properties:
+                hotel_id:
+                  type: integer
+                  example: 1
+                title:
+                  type: string
+                  example: "Central Park"
+                description:
+                  type: string
+                  example: "Beautiful urban park"
+                distance:
+                  type: number
+                  format: float
+                  example: 2.5
+                distance_unit:
+                  type: string
+                  enum: [Km, Mile]
+                  example: "Km"
+      responses:
+        201:
+          description: Nearby place created successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+  /hotels/{hotelId}/nearby:
+    get:
+      tags: [Hotel Nearby]
+      summary: Get all nearby places for a hotel
+      parameters:
+        - name: hotelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of nearby places
+        404:
+          description: Hotel not found
+        500:
+          description: Internal server error
+
+  /hotels/nearby/{id}:
+    get:
+      tags: [Hotel Nearby]
+      summary: Get a specific nearby place
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Nearby place details
+        404:
+          description: Nearby place not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Hotel Nearby]
+      summary: Update a nearby place
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "Updated Park Name"
+                description:
+                  type: string
+                  example: "Updated description"
+                distance:
+                  type: number
+                  format: float
+                  example: 3.0
+                distance_unit:
+                  type: string
+                  example: "Mile"
+      responses:
+        200:
+          description: Nearby place updated successfully
+        404:
+          description: Nearby place not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Hotel Nearby]
+      summary: Delete a nearby place
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Nearby place deleted successfully
+        404:
+          description: Nearby place not found
+        500:
+          description: Internal server error
+
+  # Hotel Nearby Gallery
+  /hotels/nearby/{nearbyId}/gallery:
+    post:
+      tags: [Hotel Nearby Gallery]
+      summary: Upload images for nearby place
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: nearbyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - images
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        201:
+          description: Images uploaded successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Hotel Nearby Gallery]
+      summary: Get gallery images for nearby place
+      parameters:
+        - name: nearbyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of gallery images
+        404:
+          description: Nearby place not found
+        500:
+          description: Internal server error
+
+  /hotels/nearby/gallery/{id}:
+    delete:
+      tags: [Hotel Nearby Gallery]
+      summary: Delete a nearby gallery image
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Image deleted successfully
+        404:
+          description: Image not found
+        500:
+          description: Internal server error
+
+  # Hotel Rules
+  /hotels/rules:
+    post:
+      tags: [Hotel Rules]
+      summary: Create a new hotel rule
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - hotel_id
+                - title
+                - icon
+              properties:
+                hotel_id:
+                  type: integer
+                  example: 1
+                title:
+                  type: string
+                  example: "No Smoking"
+                icon:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: Hotel rule created successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+  /hotels/{hotelId}/rules:
+    get:
+      tags: [Hotel Rules]
+      summary: Get all rules for a hotel
+      parameters:
+        - name: hotelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of hotel rules
+        404:
+          description: Hotel not found
+        500:
+          description: Internal server error
+
+  /hotels/rules/{id}:
+    get:
+      tags: [Hotel Rules]
+      summary: Get a specific hotel rule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Hotel rule details
+        404:
+          description: Hotel rule not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Hotel Rules]
+      summary: Update a hotel rule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "Updated Rule Title"
+                icon:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Hotel rule updated successfully
+        404:
+          description: Hotel rule not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Hotel Rules]
+      summary: Delete a hotel rule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Hotel rule deleted successfully
+        404:
+          description: Hotel rule not found
+        500:
+          description: Internal server error
+
+  # Hotel Gallery
+  /hotels/{hotelId}/gallery:
+    post:
+      tags: [Hotel Gallery]
+      summary: Upload hotel gallery images
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: hotelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - images
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        201:
+          description: Gallery images uploaded successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Hotel Gallery]
+      summary: Get hotel gallery images
+      parameters:
+        - name: hotelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of gallery images
+        404:
+          description: Hotel not found
+        500:
+          description: Internal server error
+
+  /hotels/gallery/{id}:
+    delete:
+      tags: [Hotel Gallery]
+      summary: Delete a hotel gallery image
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Image deleted successfully
+        404:
+          description: Image not found
+        500:
+          description: Internal server error
+
+  # Hotel Feature Types
+  /hotels/feature-types:
+    post:
+      tags: [Hotel Feature Types]
+      summary: Create a new hotel feature type
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - user_id
+                - name
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                name:
+                  type: string
+                  example: "Swimming Pool"
+                icon:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: Feature type created successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Hotel Feature Types]
+      summary: Get all feature types
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "pool"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            example: 10
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "id"
+            example: "id"
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "DESC"
+            example: "DESC"
+        - name: is_deleted
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 0
+      responses:
+        200:
+          description: List of feature types
+        400:
+          description: Invalid parameters
+        500:
+          description: Internal server error
+
+  /hotels/feature-types/{id}:
+    get:
+      tags: [Hotel Feature Types]
+      summary: Get a specific feature type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Feature type details
+        404:
+          description: Feature type not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Hotel Feature Types]
+      summary: Update a feature type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Feature Name"
+                icon:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Feature type updated successfully
+        404:
+          description: Feature type not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Hotel Feature Types]
+      summary: Delete a feature type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Feature type deleted successfully
+        404:
+          description: Feature type not found
+        500:
+          description: Internal server error
+
+  /hotels/feature-types/{id}/archive:
+    put:
+      tags: [Hotel Feature Types]
+      summary: Archive a feature type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Feature type archived successfully
+        404:
+          description: Feature type not found
+        500:
+          description: Internal server error
+
+  /hotels/feature-types/{id}/restore:
+    put:
+      tags: [Hotel Feature Types]
+      summary: Restore a feature type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Feature type restored successfully
+        404:
+          description: Feature type not found
+        500:
+          description: Internal server error
+
+  # Hotel Features
+  /hotels/features:
+    post:
+      tags: [Hotel Features]
+      summary: Add feature to hotel
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - hotel_id
+                - feature_id
+              properties:
+                hotel_id:
+                  type: integer
+                  example: 1
+                feature_id:
+                  type: integer
+                  example: 1
+      responses:
+        201:
+          description: Feature added successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+  /hotels/{hotelId}/features:
+    get:
+      tags: [Hotel Features]
+      summary: Get all features for a hotel
+      parameters:
+        - name: hotelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of hotel features
+        404:
+          description: Hotel not found
+        500:
+          description: Internal server error
+
+  /hotels/features/{id}:
+    delete:
+      tags: [Hotel Features]
+      summary: Remove feature from hotel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Feature removed successfully
+        404:
+          description: Feature not found
+        500:
+          description: Internal server error
+
+  # Hotel Bed Types
+  /hotels/bed-types:
+    post:
+      tags: [Hotel Bed Types]
+      summary: Create a new bed type
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - user_id
+                - name
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                name:
+                  type: string
+                  example: "King Size"
+                icon:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: Bed type created successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Hotel Bed Types]
+      summary: Get all bed types
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "king"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            example: 10
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "id"
+            example: "id"
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "DESC"
+            example: "DESC"
+        - name: is_deleted
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 0
+      responses:
+        200:
+          description: List of bed types
+        400:
+          description: Invalid parameters
+        500:
+          description: Internal server error
+
+  /hotels/bed-types/{id}:
+    get:
+      tags: [Hotel Bed Types]
+      summary: Get a specific bed type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Bed type details
+        404:
+          description: Bed type not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Hotel Bed Types]
+      summary: Update a bed type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Bed Type"
+                icon:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Bed type updated successfully
+        404:
+          description: Bed type not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Hotel Bed Types]
+      summary: Delete a bed type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Bed type deleted successfully
+        404:
+          description: Bed type not found
+        500:
+          description: Internal server error
+
+  /hotels/bed-types/{id}/archive:
+    put:
+      tags: [Hotel Bed Types]
+      summary: Archive a bed type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Bed type archived successfully
+        404:
+          description: Bed type not found
+        500:
+          description: Internal server error
+
+  /hotels/bed-types/{id}/restore:
+    put:
+      tags: [Hotel Bed Types]
+      summary: Restore a bed type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Bed type restored successfully
+        404:
+          description: Bed type not found
+        500:
+          description: Internal server error
+
+  # Hotel View Types
+  /hotels/view-types:
+    post:
+      tags: [Hotel View Types]
+      summary: Create a new view type
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - user_id
+                - name
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                name:
+                  type: string
+                  example: "Ocean View"
+                icon:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: View type created successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Hotel View Types]
+      summary: Get all view types
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "ocean"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            example: 10
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "id"
+            example: "id"
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "DESC"
+            example: "DESC"
+        - name: is_deleted
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 0
+      responses:
+        200:
+          description: List of view types
+        400:
+          description: Invalid parameters
+        500:
+          description: Internal server error
+
+  /hotels/view-types/{id}:
+    get:
+      tags: [Hotel View Types]
+      summary: Get a specific view type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: View type details
+        404:
+          description: View type not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Hotel View Types]
+      summary: Update a view type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated View Type"
+                icon:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: View type updated successfully
+        404:
+          description: View type not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Hotel View Types]
+      summary: Delete a view type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: View type deleted successfully
+        404:
+          description: View type not found
+        500:
+          description: Internal server error
+
+  /hotels/view-types/{id}/archive:
+    put:
+      tags: [Hotel View Types]
+      summary: Archive a view type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: View type archived successfully
+        404:
+          description: View type not found
+        500:
+          description: Internal server error
+
+  /hotels/view-types/{id}/restore:
+    put:
+      tags: [Hotel View Types]
+      summary: Restore a view type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: View type restored successfully
+        404:
+          description: View type not found
+        500:
+          description: Internal server error
+
+  # Hotel Room Types
+  /hotels/room-types:
+    post:
+      tags: [Hotel Room Types]
+      summary: Create a new room type
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - hotel_id
+                - name
+              properties:
+                hotel_id:
+                  type: integer
+                  example: 1
+                name:
+                  type: string
+                  example: "Deluxe Room"
+                description:
+                  type: string
+                  example: "Spacious room with city view"
+                size_sq_m:
+                  type: number
+                  format: float
+                  example: 45.5
+                bed_type_id:
+                  type: integer
+                  example: 1
+                view_type_id:
+                  type: integer
+                  example: 1
+                max_occupancy:
+                  type: integer
+                  example: 3
+      responses:
+        201:
+          description: Room type created successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+  /hotels/{hotelId}/room-types:
+    get:
+      tags: [Hotel Room Types]
+      summary: Get all room types for a hotel
+      parameters:
+        - name: hotelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of room types
+        404:
+          description: Hotel not found
+        500:
+          description: Internal server error
+
+  /hotels/room-types/{id}:
+    get:
+      tags: [Hotel Room Types]
+      summary: Get a specific room type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Room type details
+        404:
+          description: Room type not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Hotel Room Types]
+      summary: Update a room type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Room Type"
+                description:
+                  type: string
+                  example: "Updated description"
+                size_sq_m:
+                  type: number
+                  format: float
+                  example: 50.0
+                bed_type_id:
+                  type: integer
+                  example: 2
+                view_type_id:
+                  type: integer
+                  example: 2
+                max_occupancy:
+                  type: integer
+                  example: 4
+      responses:
+        200:
+          description: Room type updated successfully
+        404:
+          description: Room type not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Hotel Room Types]
+      summary: Delete a room type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Room type deleted successfully
+        404:
+          description: Room type not found
+        500:
+          description: Internal server error
+
+  /hotels/room-types/{id}/archive:
+    put:
+      tags: [Hotel Room Types]
+      summary: Archive a room type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Room type archived successfully
+        404:
+          description: Room type not found
+        500:
+          description: Internal server error
+
+  /hotels/room-types/{id}/restore:
+    put:
+      tags: [Hotel Room Types]
+      summary: Restore a room type
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Room type restored successfully
+        404:
+          description: Room type not found
+        500:
+          description: Internal server error
+
+  # Hotel Room Type Gallery
+  /hotels/room-types/{roomTypeId}/gallery:
+    post:
+      tags: [Hotel Room Type Gallery]
+      summary: Upload room type gallery images
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: roomTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - images
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        201:
+          description: Room type images uploaded successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Hotel Room Type Gallery]
+      summary: Get room type gallery images
+      parameters:
+        - name: roomTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of room type gallery images
+        404:
+          description: Room type not found
+        500:
+          description: Internal server error
+
+  /hotels/room-types/gallery/{id}:
+    delete:
+      tags: [Hotel Room Type Gallery]
+      summary: Delete a room type gallery image
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Image deleted successfully
+        404:
+          description: Image not found
+        500:
+          description: Internal server error
+
+  # Hotel Rooms
+  /hotels/rooms:
+    post:
+      tags: [Hotel Rooms]
+      summary: Create a new hotel room
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - room_type_id
+                - room_number
+                - title
+              properties:
+                room_type_id:
+                  type: integer
+                  example: 1
+                room_number:
+                  type: string
+                  example: "101"
+                title:
+                  type: string
+                  example: "Deluxe Room 101"
+                floor:
+                  type: string
+                  example: "1st Floor"
+                base_price:
+                  type: number
+                  format: float
+                  example: 199.99
+                ep:
+                  type: number
+                  format: float
+                  example: 149.99
+                cp:
+                  type: number
+                  format: float
+                  example: 129.99
+                mpp:
+                  type: number
+                  format: float
+                  example: 179.99
+                extra_ep:
+                  type: number
+                  format: float
+                  example: 49.99
+                extra_cp:
+                  type: number
+                  format: float
+                  example: 39.99
+                extra_mpp:
+                  type: number
+                  format: float
+                  example: 59.99
+                status:
+                  type: string
+                  enum: [available, occupied, maintenance, out-of-order]
+                  example: "available"
+      responses:
+        201:
+          description: Room created successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+  /hotels/{hotelId}/rooms:
+    get:
+      tags: [Hotel Rooms]
+      summary: Get all rooms for a hotel
+      parameters:
+        - name: hotelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of hotel rooms
+        404:
+          description: Hotel not found
+        500:
+          description: Internal server error
+
+  /hotels/room-types/{roomTypeId}/rooms:
+    get:
+      tags: [Hotel Rooms]
+      summary: Get all rooms for a room type
+      parameters:
+        - name: roomTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of rooms for room type
+        404:
+          description: Room type not found
+        500:
+          description: Internal server error
+
+  /hotels/rooms/{id}:
+    get:
+      tags: [Hotel Rooms]
+      summary: Get a specific hotel room
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Hotel room details
+        404:
+          description: Hotel room not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Hotel Rooms]
+      summary: Update a hotel room
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                room_number:
+                  type: string
+                  example: "102"
+                title:
+                  type: string
+                  example: "Updated Room Title"
+                floor:
+                  type: string
+                  example: "2nd Floor"
+                base_price:
+                  type: number
+                  format: float
+                  example: 219.99
+                ep:
+                  type: number
+                  format: float
+                  example: 169.99
+                cp:
+                  type: number
+                  format: float
+                  example: 149.99
+                mpp:
+                  type: number
+                  format: float
+                  example: 199.99
+                extra_ep:
+                  type: number
+                  format: float
+                  example: 59.99
+                extra_cp:
+                  type: number
+                  format: float
+                  example: 49.99
+                extra_mpp:
+                  type: number
+                  format: float
+                  example: 69.99
+                status:
+                  type: string
+                  example: "occupied"
+      responses:
+        200:
+          description: Room updated successfully
+        404:
+          description: Room not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Hotel Rooms]
+      summary: Delete a hotel room
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Room deleted successfully
+        404:
+          description: Room not found
+        500:
+          description: Internal server error
+
+  # Hotel Amenities
+  /hotels/amenities:
+    post:
+      tags: [Hotel Amenities]
+      summary: Create a new amenity
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - user_id
+                - name
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                name:
+                  type: string
+                  example: "Free WiFi"
+                icon:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: Amenity created successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Hotel Amenities]
+      summary: Get all amenities
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "wifi"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            example: 10
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "id"
+            example: "id"
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "DESC"
+            example: "DESC"
+        - name: is_deleted
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 0
+      responses:
+        200:
+          description: List of amenities
+        400:
+          description: Invalid parameters
+        500:
+          description: Internal server error
+
+  /hotels/amenities/{id}:
+    get:
+      tags: [Hotel Amenities]
+      summary: Get a specific amenity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Amenity details
+        404:
+          description: Amenity not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Hotel Amenities]
+      summary: Update an amenity
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Amenity"
+                icon:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Amenity updated successfully
+        404:
+          description: Amenity not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Hotel Amenities]
+      summary: Delete an amenity
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Amenity deleted successfully
+        404:
+          description: Amenity not found
+        500:
+          description: Internal server error
+
+  /hotels/amenities/{id}/archive:
+    put:
+      tags: [Hotel Amenities]
+      summary: Archive an amenity
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Amenity archived successfully
+        404:
+          description: Amenity not found
+        500:
+          description: Internal server error
+
+  /hotels/amenities/{id}/restore:
+    put:
+      tags: [Hotel Amenities]
+      summary: Restore an amenity
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Amenity restored successfully
+        404:
+          description: Amenity not found
+        500:
+          description: Internal server error
+
+  # Hotel Room Amenities
+  /hotels/room-amenities:
+    post:
+      tags: [Hotel Room Amenities]
+      summary: Add amenity to room
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - room_id
+                - amenity_id
+              properties:
+                room_id:
+                  type: integer
+                  example: 1
+                amenity_id:
+                  type: integer
+                  example: 1
+      responses:
+        201:
+          description: Room amenity added successfully
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+
+  /hotels/rooms/{roomId}/amenities:
+    get:
+      tags: [Hotel Room Amenities]
+      summary: Get all amenities for a room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of room amenities
+        404:
+          description: Room not found
+        500:
+          description: Internal server error
+
+  /hotels/room-amenities/{id}:
+    delete:
+      tags: [Hotel Room Amenities]
+      summary: Remove amenity from room
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: Room amenity removed successfully
+        404:
+          description: Room amenity not found
+        500:
+          description: Internal server error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

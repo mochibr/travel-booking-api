@@ -54,21 +54,6 @@ router.delete('/:vehicle_id/tyres', auth('admin'), vehicleOverviewController.del
 router.delete('/:vehicle_id/gallery', auth('admin'), vehicleOverviewController.deleteVehicleGalleryByVehicleId);
 
 // Vehicle Routes
-// router.post('/',  auth('admin'), upload.single('feature_image'), validateCreateVehicle, vehicleController.createVehicle);
-// router.get('/', validateVehicleQuery, vehicleController.getVehicles);
-// router.get('/:id', vehicleController.getVehicle);
-// router.put('/:id', auth('admin'), upload.single('feature_image'), validateUpdateVehicle, vehicleController.updateVehicle);
-// router.delete('/:id', auth('admin'), vehicleController.deleteVehicle);
-
-// // Vehicle Service Routes
-// router.post('/services', auth('admin'), validateCreateVehicleService, vehicleServiceController.createVehicleService);
-// router.get('/services', vehicleServiceController.getAllVehicleServices);
-// router.get('/:vehicleId/services', vehicleServiceController.getVehicleServices);
-// router.get('/services/:id', vehicleServiceController.getVehicleService);
-// router.put('/services/:id', auth('admin'), vehicleServiceController.updateVehicleService);
-// router.delete('/services/:id', auth('admin'), vehicleServiceController.deleteVehicleService);
-
-// Vehicle Routes
 router.post('/', auth('admin'), upload.single('feature_image'), validateCreateVehicle, vehicleController.createVehicle);
 router.get('/', validateVehicleQuery, vehicleController.getVehicles);
 
@@ -94,7 +79,7 @@ router.delete('/:id', auth('admin'), vehicleController.deleteVehicle);
 // Vehicle Gallery Routes
 router.post('/:vehicleId/gallery', auth('admin'), upload.array('images', 10), vehicleGalleryController.uploadVehicleImages);
 router.get('/:vehicleId/gallery', vehicleGalleryController.getVehicleGallery);
-router.put('/:vehicleId/gallery', auth('admin'), upload.array('update_images', 20), vehicleGalleryController.updateVehicleImages);
+router.put('/gallery/:id', auth('admin'), upload.single('image'), vehicleGalleryController.updateVehicleImage);
 router.delete('/gallery/:id', auth('admin'), vehicleGalleryController.deleteVehicleImage);
 
 module.exports = router;
