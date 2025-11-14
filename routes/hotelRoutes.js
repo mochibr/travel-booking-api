@@ -38,6 +38,7 @@ const upload = multer({
 // Hotel Type Routes
 router.post('/types', auth('admin'), hotelTypeController.createHotelType);
 router.get('/types', hotelTypeController.getHotelTypes);
+router.get('/types/all/list', hotelTypeController.getAllHotelTypes);
 router.get('/types/:id', hotelTypeController.getHotelType);
 router.put('/types/:id', auth('admin'), hotelTypeController.updateHotelType);
 router.put('/types/:id/archive', auth('admin'), hotelTypeController.archiveHotelType);
@@ -47,6 +48,7 @@ router.delete('/types/:id', auth('admin'), hotelTypeController.deleteHotelType);
 // Hotel Routes
 router.post('/', auth('admin'), upload.single('logo_image'), hotelController.createHotel);
 router.get('/', hotelController.getHotels);
+router.get('/all/list', hotelController.getAllHotels);
 router.get('/:id', hotelController.getHotel);
 router.put('/:id', auth('admin'), upload.single('logo_image'), hotelController.updateHotel);
 router.delete('/:id', auth('admin'), hotelController.deleteHotel);

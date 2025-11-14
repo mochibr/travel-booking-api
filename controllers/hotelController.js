@@ -39,6 +39,25 @@ const createHotel = async (req, res) => {
   }
 };
 
+const getAllHotels = async (req, res) => {
+  try {
+    const hotels = await Hotel.findAll();
+
+    res.status(200).json({
+      success: true,
+      data: hotels,
+      count: hotels.length
+    });
+  } catch (error) {
+    console.error('Get all hotels error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch hotels',
+      error: error.message
+    });
+  }
+};
+
 const getHotels = async (req, res) => {
   try {
     const { 
@@ -201,6 +220,7 @@ const deleteHotel = async (req, res) => {
 
 module.exports = {
   createHotel,
+  getAllHotels,
   getHotels,
   getHotel,
   updateHotel,

@@ -13,6 +13,25 @@ class HotelType {
     return result.insertId;
   }
 
+  static async findAll({ is_deleted = 0 } = {}) {
+    let query = 'SELECT id, name FROM hotel_type WHERE 1=1';
+    const params = [];
+
+    if (is_deleted !== undefined && is_deleted !== null) {
+      query += ' AND is_deleted = ?';
+      params.push(is_deleted);
+    }
+
+    query += ' ORDER BY name ASC';
+
+    try {
+      const [rows] = await db.execute(query, params);
+      return rows;
+    } catch (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+  }
+
   static async findWithPagination({ 
     user_id, 
     search, 

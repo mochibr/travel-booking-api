@@ -4,7 +4,7 @@ class Hotel {
   static async create(hotelData) {
     const {
       user_id, country_id, state_id, city_id, hotel_type_id,
-      logo_image, name, sub_title, address, city, country,
+      logo_image, name, sub_title, address,
       phone_number, email, description, latitude, longitude,
       rating, terms_and_conditions
     } = hotelData;
@@ -12,13 +12,13 @@ class Hotel {
     const [result] = await db.execute(
       `INSERT INTO hotel (
         user_id, country_id, state_id, city_id, hotel_type_id,
-        logo_image, name, sub_title, address, city, country,
+        logo_image, name, sub_title, address,
         phone_number, email, description, latitude, longitude,
         rating, terms_and_conditions
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         user_id, country_id, state_id, city_id, hotel_type_id,
-        logo_image, name, sub_title, address, city, country,
+        logo_image, name, sub_title, address,
         phone_number, email, description, latitude, longitude,
         rating, terms_and_conditions
       ]
@@ -27,7 +27,7 @@ class Hotel {
     return result.insertId;
   }
 
-  static async findAllWithPagination({ 
+  /*static async findAllWithPagination({ 
     user_id, 
     hotel_type_id, 
     search, 
@@ -96,8 +96,104 @@ class Hotel {
     } catch (error) {
       throw new Error(`Database error: ${error.message}`);
     }
+  }*/
+
+  static async findAll() {
+    const query = `
+      SELECT 
+        h.id,
+        h.name
+      FROM hotel h 
+      ORDER BY h.name ASC
+    `;
+
+    try {
+      const [rows] = await db.execute(query);
+      return rows;
+    } catch (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
   }
 
+  static async findAllWithPagination({ 
+    user_id, 
+    hotel_type_id, 
+    search, 
+    page, 
+    limit, 
+    sort_by, 
+    sort_order 
+  }) {
+    const offset = (page - 1) * limit;
+    
+    let query = `
+      SELECT 
+        h.*, 
+        ht.name as hotel_type_name,
+        c.name as country_name,
+        s.name as state_name,
+        ct.name as city_name
+      FROM hotel h 
+      LEFT JOIN hotel_type ht ON h.hotel_type_id = ht.id 
+      LEFT JOIN countries c ON h.country_id = c.id
+      LEFT JOIN states s ON h.state_id = s.id
+      LEFT JOIN cities ct ON h.city_id = ct.id
+      WHERE 1=1
+    `;
+    let countQuery = `
+      SELECT COUNT(*) as total_count 
+      FROM hotel h 
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    const countParams = [];
+
+    if (user_id) {
+      query += ' AND h.user_id = ?';
+      countQuery += ' AND h.user_id = ?';
+      params.push(user_id);
+      countParams.push(user_id);
+    }
+
+    if (hotel_type_id) {
+      query += ' AND h.hotel_type_id = ?';
+      countQuery += ' AND h.hotel_type_id = ?';
+      params.push(hotel_type_id);
+      countParams.push(hotel_type_id);
+    }
+
+    if (search) {
+      const searchTerm = `%${search}%`;
+      query += ' AND (h.name LIKE ? OR h.sub_title LIKE ? OR h.address LIKE ? OR ct.name LIKE ? OR c.name LIKE ?)';
+      countQuery += ' AND (h.name LIKE ? OR h.sub_title LIKE ? OR h.address LIKE ? OR h.city LIKE ? OR h.country LIKE ?)';
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+      countParams.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+    }
+
+    const validSortColumns = ['id', 'name', 'rating', 'created_at', 'updated_at'];
+    const sortColumn = validSortColumns.includes(sort_by) ? sort_by : 'id';
+    const order = sort_order === 'ASC' ? 'ASC' : 'DESC';
+    
+    query += ` ORDER BY h.${sortColumn} ${order}`;
+    query += ' LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    try {
+      const [countResult] = await db.execute(countQuery, countParams);
+      const totalCount = countResult[0].total_count;
+
+      const [rows] = await db.execute(query, params);
+      
+      return {
+        hotels: rows,
+        totalCount
+      };
+    } catch (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+  }
+  
   static async findById(id) {
     const [rows] = await db.execute(
       `SELECT h.*, ht.name as hotel_type_name 

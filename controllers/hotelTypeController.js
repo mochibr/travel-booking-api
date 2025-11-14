@@ -30,6 +30,27 @@ const createHotelType = async (req, res) => {
   }
 };
 
+const getAllHotelTypes = async (req, res) => {
+  try {
+    const hotelTypes = await HotelType.findAll({ 
+      is_deleted: 0 
+    });
+
+    res.status(200).json({
+      success: true,
+      data: hotelTypes,
+      count: hotelTypes.length
+    });
+  } catch (error) {
+    console.error('Get all hotel types error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch hotel types',
+      error: error.message
+    });
+  }
+};
+
 const getHotelTypes = async (req, res) => {
   try {
     const { 
@@ -221,6 +242,7 @@ const restoreHotelType = async (req, res) => {
 
 module.exports = {
   createHotelType,
+  getAllHotelTypes,
   getHotelTypes,
   getHotelType,
   updateHotelType,

@@ -126,6 +126,44 @@ paths:
         500:
           description: Internal server error
 
+  /hotels/types/all/list:
+    get:
+      tags: [Hotel Types]
+      summary: Get all hotel types without pagination
+      description: Retrieve all hotel types in a simple list format, useful for dropdowns and filters
+      responses:
+        200:
+          description: List of all hotel types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        user_id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: "Luxury Hotel"
+                  count:
+                    type: integer
+                    example: 2
+        400:
+          description: Invalid parameters
+        500:
+          description: Internal server error
+
   /hotels/types/{id}:
     get:
       tags: [Hotel Types]
@@ -281,12 +319,6 @@ paths:
                 address:
                   type: string
                   example: "123 Main Street"
-                city:
-                  type: string
-                  example: "New York"
-                country:
-                  type: string
-                  example: "USA"
                 phone_number:
                   type: string
                   example: "+1-234-567-8900"
@@ -376,6 +408,39 @@ paths:
         500:
           description: Internal server error
 
+  /hotels/all/list:
+    get:
+      tags: [Hotels]
+      summary: Get all hotels without pagination (id and name only)
+      description: Retrieve all hotels with only id and name fields in a simple list format, useful for dropdowns and filters
+      responses:
+        200:
+          description: List of all hotels with id and name
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: "Grand Luxury Hotel"
+                  count:
+                    type: integer
+                    example: 10
+        500:
+          description: Internal server error
+
   /hotels/{id}:
     get:
       tags: [Hotels]
@@ -441,12 +506,6 @@ paths:
                 address:
                   type: string
                   example: "456 Updated Street"
-                city:
-                  type: string
-                  example: "Los Angeles"
-                country:
-                  type: string
-                  example: "USA"
                 phone_number:
                   type: string
                   example: "+1-234-567-8901"
