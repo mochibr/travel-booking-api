@@ -32,7 +32,7 @@ class HotelType {
     }
   }
 
-  static async findWithPagination({ 
+ static async findWithPagination({ 
     user_id, 
     search, 
     page, 
@@ -41,38 +41,54 @@ class HotelType {
     sort_order, 
     is_deleted = 0 
   }) {
-    let query = 'SELECT * FROM hotel_type WHERE 1=1';
-    let countQuery = 'SELECT COUNT(*) as total_count FROM hotel_type WHERE 1=1';
+    let query = `
+      SELECT 
+        ht.*, 
+        u.name as user_name 
+      FROM hotel_type ht 
+      LEFT JOIN users u ON ht.user_id = u.id 
+      WHERE 1=1
+    `;
+    
+    let countQuery = 'SELECT COUNT(*) as total_count FROM hotel_type ht WHERE 1=1';
     const params = [];
     const countParams = [];
 
     if (is_deleted !== undefined && is_deleted !== null) {
-      query += ' AND is_deleted = ?';
-      countQuery += ' AND is_deleted = ?';
+      query += ' AND ht.is_deleted = ?';
+      countQuery += ' AND ht.is_deleted = ?';
       params.push(is_deleted);
       countParams.push(is_deleted);
     }
 
     if (user_id) {
-      query += ' AND user_id = ?';
-      countQuery += ' AND user_id = ?';
+      query += ' AND ht.user_id = ?';
+      countQuery += ' AND ht.user_id = ?';
       params.push(user_id);
       countParams.push(user_id);
     }
 
     if (search) {
       const searchTerm = `%${search}%`;
-      query += ' AND name LIKE ?';
-      countQuery += ' AND name LIKE ?';
+      query += ' AND ht.name LIKE ?';
+      countQuery += ' AND ht.name LIKE ?';
       params.push(searchTerm);
       countParams.push(searchTerm);
     }
 
-    const validSortColumns = ['id', 'name', 'created_at', 'updated_at'];
+    const validSortColumns = ['id', 'name', 'created_at', 'updated_at', 'user_name'];
     const sortColumn = validSortColumns.includes(sort_by) ? sort_by : 'id';
     const order = sort_order === 'ASC' ? 'ASC' : 'DESC';
     
-    query += ` ORDER BY ${sortColumn} ${order}`;
+    // Handle table prefix for sort columns
+    let sortColumnWithPrefix = sortColumn;
+    if (sortColumn === 'user_name') {
+      sortColumnWithPrefix = 'u.name'; // Sort by user name from users table
+    } else {
+      sortColumnWithPrefix = `ht.${sortColumn}`; // Sort by hotel_type columns
+    }
+    
+    query += ` ORDER BY ${sortColumnWithPrefix} ${order}`;
     query += ' LIMIT ? OFFSET ?';
     params.push(limit, (page - 1) * limit);
 

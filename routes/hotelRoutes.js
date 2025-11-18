@@ -45,17 +45,10 @@ router.put('/types/:id/archive', auth('admin'), hotelTypeController.archiveHotel
 router.put('/types/:id/restore', auth('admin'), hotelTypeController.restoreHotelType);
 router.delete('/types/:id', auth('admin'), hotelTypeController.deleteHotelType);
 
-// Hotel Routes
-router.post('/', auth('admin'), upload.single('logo_image'), hotelController.createHotel);
-router.get('/', hotelController.getHotels);
-router.get('/all/list', hotelController.getAllHotels);
-router.get('/:id', hotelController.getHotel);
-router.put('/:id', auth('admin'), upload.single('logo_image'), hotelController.updateHotel);
-router.delete('/:id', auth('admin'), hotelController.deleteHotel);
-
 // Hotel Nearby Routes
 router.post('/nearby', auth('admin'), hotelNearbyController.createHotelNearby);
-router.get('/:hotelId/nearby', hotelNearbyController.getHotelNearbyPlaces);
+router.get('/nearby', hotelNearbyController.getHotelNearbyPlaces);
+router.get('/:hotelId/nearby', hotelNearbyController.getHotelIdNearbyPlaces);
 router.get('/nearby/:id', hotelNearbyController.getHotelNearby);
 router.put('/nearby/:id', auth('admin'), hotelNearbyController.updateHotelNearby);
 router.delete('/nearby/:id', auth('admin'), hotelNearbyController.deleteHotelNearby);
@@ -75,6 +68,7 @@ router.delete('/rules/:id', auth('admin'), hotelRuleController.deleteHotelRule);
 // Hotel Gallery Routes
 router.post('/:hotelId/gallery', auth('admin'), upload.array('images', 10), hotelGalleryController.uploadHotelImages);
 router.get('/:hotelId/gallery', hotelGalleryController.getHotelGallery);
+router.put('/gallery/:id', auth('admin'), upload.single('image'), hotelGalleryController.updateHotelGallery);
 router.delete('/gallery/:id', auth('admin'), hotelGalleryController.deleteHotelImage);
 
 // Hotel Feature Type Routes
@@ -144,5 +138,13 @@ router.delete('/amenities/:id', auth('admin'), hotelAmenityController.deleteHote
 router.post('/room-amenities', auth('admin'), hotelRoomAmenityController.createHotelRoomAmenity);
 router.get('/rooms/:roomId/amenities', hotelRoomAmenityController.getRoomAmenities);
 router.delete('/room-amenities/:id', auth('admin'), hotelRoomAmenityController.deleteRoomAmenity);
+
+// Hotel Routes
+router.post('/', auth('admin'), upload.single('logo_image'), hotelController.createHotel);
+router.get('/', hotelController.getHotels);
+router.get('/all/list', hotelController.getAllHotels);
+router.get('/:id', hotelController.getHotel);
+router.put('/:id', auth('admin'), upload.single('logo_image'), hotelController.updateHotel);
+router.delete('/:id', auth('admin'), hotelController.deleteHotel);
 
 module.exports = router;

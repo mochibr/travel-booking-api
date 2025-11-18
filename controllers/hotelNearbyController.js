@@ -22,6 +22,58 @@ const createHotelNearby = async (req, res) => {
 
 const getHotelNearbyPlaces = async (req, res) => {
   try {
+    const { 
+      hotel_id,
+      search,
+      page = 1,
+      limit = 10,
+      sort_by = 'created_at',
+      sort_order = 'DESC'
+    } = req.query;
+
+    // Convert page and limit to numbers
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
+
+    // Build filter object (hotel_id is now optional)
+    const filters = {
+      hotel_id: hotel_id ? parseInt(hotel_id) : null,
+      search: search || null,
+      page: pageNum,
+      limit: limitNum,
+      offset: offset,
+      sort_by: sort_by,
+      sort_order: sort_order.toUpperCase()
+    };
+
+    // Get nearby places with filters and pagination
+    const result = await HotelNearby.findWithFilters(filters);
+    
+    res.json({
+      success: true,
+      data: {
+        nearbyPlaces: result.data,
+        pagination: {
+          current_page: pageNum,
+          total_pages: Math.ceil(result.total / limitNum),
+          total_records: result.total,
+          has_next: pageNum < Math.ceil(result.total / limitNum),
+          has_prev: pageNum > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get hotel nearby places error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch hotel nearby places'
+    });
+  }
+};
+
+const getHotelIdNearbyPlaces = async (req, res) => {
+  try {
     const { hotelId } = req.params;
     
     const nearbyPlaces = await HotelNearby.findByHotelId(hotelId);
@@ -117,6 +169,7 @@ const deleteHotelNearby = async (req, res) => {
 
 module.exports = {
   createHotelNearby,
+  getHotelIdNearbyPlaces,
   getHotelNearbyPlaces,
   getHotelNearby,
   updateHotelNearby,

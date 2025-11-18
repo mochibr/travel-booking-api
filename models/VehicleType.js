@@ -30,11 +30,18 @@ class VehicleType {
   }
 
   static async findById(id, includeArchived = false) {
-    let query = 'SELECT * FROM vehicle_types WHERE id = ?';
+    let query = `
+      SELECT 
+        vt.*,
+        u.name as user_name
+      FROM vehicle_types vt 
+      LEFT JOIN users u ON vt.user_id = u.id 
+      WHERE vt.id = ?
+    `;
     const params = [id];
     
     if (!includeArchived) {
-      query += ' AND is_deleted = 0';
+      query += ' AND vt.is_deleted = 0';
     }
     
     const [rows] = await db.execute(query, params);
@@ -50,14 +57,21 @@ class VehicleType {
     sort_order, 
     is_deleted = 0 
   }) {
-    let query = 'SELECT * FROM vehicle_types WHERE 1=1';
+    let query = `
+      SELECT 
+        vt.*,
+        u.name as user_name
+      FROM vehicle_types vt 
+      LEFT JOIN users u ON vt.user_id = u.id 
+      WHERE 1=1
+    `;
     let countQuery = 'SELECT COUNT(*) as total_count FROM vehicle_types WHERE 1=1';
     const params = [];
     const countParams = [];
 
     // Handle archive filtering based on is_deleted parameter
     if (is_deleted !== undefined && is_deleted !== null) {
-      query += ' AND is_deleted = ?';
+      query += ' AND vt.is_deleted = ?';
       countQuery += ' AND is_deleted = ?';
       params.push(is_deleted);
       countParams.push(is_deleted);
@@ -65,7 +79,7 @@ class VehicleType {
 
     // Add user filter if provided
     if (user_id) {
-      query += ' AND user_id = ?';
+      query += ' AND vt.user_id = ?';
       countQuery += ' AND user_id = ?';
       params.push(user_id);
       countParams.push(user_id);
@@ -74,7 +88,7 @@ class VehicleType {
     // Add search filter if provided
     if (search) {
       const searchTerm = `%${search}%`;
-      query += ' AND (name LIKE ? OR description LIKE ?)';
+      query += ' AND (vt.name LIKE ? OR vt.description LIKE ?)';
       countQuery += ' AND (name LIKE ? OR description LIKE ?)';
       params.push(searchTerm, searchTerm);
       countParams.push(searchTerm, searchTerm);
@@ -85,7 +99,7 @@ class VehicleType {
     const sortColumn = validSortColumns.includes(sort_by) ? sort_by : 'id';
     const order = sort_order === 'ASC' ? 'ASC' : 'DESC';
     
-    query += ` ORDER BY ${sortColumn} ${order}`;
+    query += ` ORDER BY vt.${sortColumn} ${order}`;
 
     // Add pagination
     query += ' LIMIT ? OFFSET ?';

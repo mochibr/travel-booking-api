@@ -143,6 +143,9 @@ class Hotel {
     let countQuery = `
       SELECT COUNT(*) as total_count 
       FROM hotel h 
+      LEFT JOIN countries c ON h.country_id = c.id
+      LEFT JOIN states s ON h.state_id = s.id
+      LEFT JOIN cities ct ON h.city_id = ct.id
       WHERE 1=1
     `;
     
@@ -166,7 +169,7 @@ class Hotel {
     if (search) {
       const searchTerm = `%${search}%`;
       query += ' AND (h.name LIKE ? OR h.sub_title LIKE ? OR h.address LIKE ? OR ct.name LIKE ? OR c.name LIKE ?)';
-      countQuery += ' AND (h.name LIKE ? OR h.sub_title LIKE ? OR h.address LIKE ? OR h.city LIKE ? OR h.country LIKE ?)';
+      countQuery += ' AND (h.name LIKE ? OR h.sub_title LIKE ? OR h.address LIKE ? OR ct.name LIKE ? OR c.name LIKE ?)';
       params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
       countParams.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
     }
@@ -196,15 +199,25 @@ class Hotel {
   
   static async findById(id) {
     const [rows] = await db.execute(
-      `SELECT h.*, ht.name as hotel_type_name 
-       FROM hotel h 
-       LEFT JOIN hotel_type ht ON h.hotel_type_id = ht.id 
-       WHERE h.id = ?`,
+      `SELECT 
+        h.*, 
+        ht.name as hotel_type_name,
+        c.name as country_name,
+        s.name as state_name,
+        ct.name as city_name,
+        u.name as user_name
+      FROM hotel h 
+      LEFT JOIN hotel_type ht ON h.hotel_type_id = ht.id 
+      LEFT JOIN countries c ON h.country_id = c.id
+      LEFT JOIN states s ON h.state_id = s.id
+      LEFT JOIN cities ct ON h.city_id = ct.id
+      LEFT JOIN users u ON h.user_id = u.id
+      WHERE h.id = ?`,
       [id]
     );
     return rows[0];
   }
-
+  
   static async update(id, updateData) {
     const fields = [];
     const values = [];

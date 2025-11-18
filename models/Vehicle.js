@@ -86,9 +86,19 @@ class Vehicle {
     const offset = (page - 1) * limit;
     
     let query = `
-      SELECT v.*, vt.name as vehicle_type_name 
+      SELECT 
+        v.*, 
+        vt.name as vehicle_type_name,
+        u.name as user_name,
+        c.name as country_name,
+        s.name as state_name,
+        city.name as city_name
       FROM vehicles v 
       LEFT JOIN vehicle_types vt ON v.vehicle_type_id = vt.id 
+      LEFT JOIN users u ON v.user_id = u.id 
+      LEFT JOIN countries c ON v.country_id = c.id
+      LEFT JOIN states s ON v.state_id = s.id
+      LEFT JOIN cities city ON v.city_id = city.id
       WHERE 1=1
     `;
     let countQuery = `
@@ -160,9 +170,19 @@ class Vehicle {
 
   static async findById(id) {
     let query = `
-      SELECT v.*, vt.name as vehicle_type_name 
+      SELECT 
+        v.*, 
+        vt.name as vehicle_type_name,
+        u.name as user_name,
+        c.name as country_name,
+        s.name as state_name,
+        city.name as city_name
       FROM vehicles v 
       LEFT JOIN vehicle_types vt ON v.vehicle_type_id = vt.id 
+      LEFT JOIN users u ON v.user_id = u.id 
+      LEFT JOIN countries c ON v.country_id = c.id
+      LEFT JOIN states s ON v.state_id = s.id
+      LEFT JOIN cities city ON v.city_id = city.id
       WHERE v.id = ?
     `;
     const params = [id];

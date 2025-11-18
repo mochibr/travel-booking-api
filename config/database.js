@@ -10,7 +10,7 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  // reconnect: true
+  reconnect: true
 };
 
 const pool = mysql.createPool(dbConfig);

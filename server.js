@@ -8,6 +8,7 @@ const authAdminRoutes = require('./routes/authAdminRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const hotelRoutes = require('./routes/hotelRoutes');
 const locationRoutes = require('./routes/locationRoutes');
+const driverRoutes = require('./routes/driverRoutes');
 const swaggerUI = require('swagger-ui-express');
 const swaggerDocs = require('./utils/swagger');
 
@@ -39,6 +40,7 @@ app.use('/api/v1/admin/auth', authAdminRoutes);
 app.use('/api/v1/vehicles', vehicleRoutes);
 app.use('/api/v1/hotels', hotelRoutes);
 app.use('/api/v1/locations', locationRoutes);
+app.use('/api/v1/drivers', driverRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -43,7 +43,7 @@ const sendTemplatedEmail = async (to, subject, templateName, templateData) => {
       appName: process.env.APP_NAME,
       currentYear: new Date().getFullYear()
     });
-
+    console.log("html",html)
     const mailOptions = {
       from: `"${process.env.APP_NAME}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to,
