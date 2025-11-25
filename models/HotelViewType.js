@@ -13,6 +13,17 @@ class HotelViewType {
     return result.insertId;
   }
 
+  static async findAll() {
+    try {
+      const [rows] = await db.execute(
+        'SELECT id, name FROM hotel_view_type WHERE is_deleted = 0 ORDER BY id DESC'
+      );
+      return rows;
+    } catch (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+  }
+
   static async findWithPagination({ 
     user_id, 
     search, 

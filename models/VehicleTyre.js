@@ -169,6 +169,7 @@ class VehicleTyre {
 
     return {
       tyres: rows,
+      totalCount: total, 
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),

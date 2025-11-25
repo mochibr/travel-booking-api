@@ -13,6 +13,51 @@ class HotelRule {
     return result.insertId;
   }
 
+  static async findWithFilters(filters) {
+    let query = `
+      SELECT SQL_CALC_FOUND_ROWS * 
+      FROM hotel_rule 
+      WHERE 1=1
+    `;
+    const queryParams = [];
+
+    // Add hotel_id filter if provided
+    if (filters.hotel_id) {
+      query += ` AND hotel_id = ?`;
+      queryParams.push(filters.hotel_id);
+    }
+
+    // Add search filter if provided
+    if (filters.search) {
+      query += ` AND (title LIKE ?)`;
+      const searchTerm = `%${filters.search}%`;
+      queryParams.push(searchTerm);
+    }
+
+    // Add sorting
+    const validSortColumns = ['id', 'title', 'created_at', 'updated_at'];
+    const sortColumn = validSortColumns.includes(filters.sort_by) ? filters.sort_by : 'created_at';
+    const sortOrder = filters.sort_order === 'ASC' ? 'ASC' : 'DESC';
+    
+    query += ` ORDER BY ${sortColumn} ${sortOrder}`;
+
+    // Add pagination
+    query += ` LIMIT ? OFFSET ?`;
+    queryParams.push(filters.limit, filters.offset);
+
+    // Execute query
+    const [rows] = await db.execute(query, queryParams);
+    
+    // Get total count
+    const [countRows] = await db.execute('SELECT FOUND_ROWS() as total');
+    const total = countRows[0].total;
+
+    return {
+      data: rows,
+      total: total
+    };
+  }
+
   static async findByHotelId(hotelId) {
     const [rows] = await db.execute(
       'SELECT * FROM hotel_rule WHERE hotel_id = ? ORDER BY created_at DESC',

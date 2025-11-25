@@ -38,6 +38,26 @@ const createHotelBedType = async (req, res) => {
   }
 };
 
+const getAllHotelBedTypes = async (req, res) => {
+  try {
+    const bedTypes = await HotelBedType.findAll();
+    
+    res.json({
+      success: true,
+      data: { 
+        bedTypes,
+        count: bedTypes.length
+      }
+    });
+  } catch (error) {
+    console.error('Get all hotel bed types error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch hotel bed types'
+    });
+  }
+};
+
 const getHotelBedTypes = async (req, res) => {
   try {
     const { 
@@ -259,6 +279,7 @@ const restoreHotelBedType = async (req, res) => {
 
 module.exports = {
   createHotelBedType,
+  getAllHotelBedTypes,
   getHotelBedTypes,
   getHotelBedType,
   updateHotelBedType,

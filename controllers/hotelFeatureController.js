@@ -2,39 +2,131 @@ const HotelFeature = require('../models/HotelFeature');
 
 const createHotelFeature = async (req, res) => {
   try {
-    const featureData = { ...req.body };
+    const { hotel_id, feature_ids } = req.body;
+    console.log(req.body);
 
-    const featureId = await HotelFeature.create(featureData);
+    // Validate required fields
+    if (!hotel_id || !feature_ids || !Array.isArray(feature_ids)) {
+      return res.status(400).json({
+        success: false,
+        error: 'hotel_id and feature_ids array are required'
+      });
+    }
+
+    const featureId = await HotelFeature.create({ hotel_id, feature_ids });
 
     res.status(201).json({
       success: true,
-      message: 'Hotel feature added successfully',
+      message: 'Hotel features added successfully',
       data: { featureId }
     });
   } catch (error) {
     console.error('Create hotel feature error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to add hotel feature'
+      error: error.message || 'Failed to add hotel features'
+    });
+  }
+};
+
+const updateHotelFeatures = async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    const { feature_ids } = req.body;
+
+    // Validate required fields
+    if (!feature_ids || !Array.isArray(feature_ids)) {
+      return res.status(400).json({
+        success: false,
+        error: 'feature_ids array is required'
+      });
+    }
+
+    const updated = await HotelFeature.update(hotelId, feature_ids);
+
+    res.json({
+      success: true,
+      message: 'Hotel features updated successfully',
+      data: { updated }
+    });
+  } catch (error) {
+    console.error('Update hotel features error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to update hotel features'
     });
   }
 };
 
 const getHotelFeatures = async (req, res) => {
   try {
-    const { hotelId } = req.params;
-    
-    const features = await HotelFeature.findByHotelId(hotelId);
+    const {
+      hotel_id, // Now optional query parameter
+      search = '',
+      page = 1,
+      limit = 10,
+      sort_by = 'id',
+      sort_order = 'DESC'
+    } = req.query;
+
+    const result = await HotelFeature.findAllWithPagination(
+      { 
+        hotel_id: hotel_id ? parseInt(hotel_id) : null,
+        search, 
+        page: parseInt(page), 
+        limit: parseInt(limit), 
+        sort_by, 
+        sort_order 
+      }
+    );
     
     res.json({
       success: true,
-      data: { features }
+      data: {
+        features: result.features,
+        pagination: result.pagination
+      }
     });
   } catch (error) {
     console.error('Get hotel features error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch hotel features'
+    });
+  }
+};
+
+const getHotelFeature = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate required field
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Feature ID is required'
+      });
+    }
+
+    // You'll need to add a findById method to your HotelFeature model
+    const feature = await HotelFeature.findById(id);
+    
+    if (!feature) {
+      return res.status(404).json({
+        success: false,
+        error: 'Hotel feature not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: { feature }
+    });
+  } catch (error) {
+    console.error('Get hotel feature error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch hotel feature'
     });
   }
 };
@@ -66,6 +158,8 @@ const deleteHotelFeature = async (req, res) => {
 
 module.exports = {
   createHotelFeature,
+  updateHotelFeatures,
   getHotelFeatures,
+  getHotelFeature,
   deleteHotelFeature
 };

@@ -56,11 +56,12 @@ router.delete('/nearby/:id', auth('admin'), hotelNearbyController.deleteHotelNea
 // Hotel Nearby Gallery Routes
 router.post('/nearby/:nearbyId/gallery', auth('admin'), upload.array('images', 10), hotelNearbyGalleryController.uploadNearbyImages);
 router.get('/nearby/:nearbyId/gallery', hotelNearbyGalleryController.getNearbyGallery);
+router.put('/nearby/gallery/:id', auth('admin'), upload.single('image'), hotelNearbyGalleryController.updateNearbyImage);
 router.delete('/nearby/gallery/:id', auth('admin'), hotelNearbyGalleryController.deleteNearbyImage);
 
 // Hotel Rule Routes
 router.post('/rules', auth('admin'), upload.single('icon'), hotelRuleController.createHotelRule);
-router.get('/:hotelId/rules', hotelRuleController.getHotelRules);
+router.get('/rules', hotelRuleController.getHotelRules);
 router.get('/rules/:id', hotelRuleController.getHotelRule);
 router.put('/rules/:id', auth('admin'), upload.single('icon'), hotelRuleController.updateHotelRule);
 router.delete('/rules/:id', auth('admin'), hotelRuleController.deleteHotelRule);
@@ -74,6 +75,7 @@ router.delete('/gallery/:id', auth('admin'), hotelGalleryController.deleteHotelI
 // Hotel Feature Type Routes
 router.post('/feature-types', auth('admin'), upload.single('icon'), hotelFeatureTypeController.createHotelFeatureType);
 router.get('/feature-types', hotelFeatureTypeController.getHotelFeatureTypes);
+router.get('/feature-types/all/list', hotelFeatureTypeController.getAllHotelFeatureTypes); 
 router.get('/feature-types/:id', hotelFeatureTypeController.getHotelFeatureType);
 router.put('/feature-types/:id', auth('admin'), upload.single('icon'), hotelFeatureTypeController.updateHotelFeatureType);
 router.put('/feature-types/:id/archive', auth('admin'), hotelFeatureTypeController.archiveHotelFeatureType);
@@ -82,12 +84,15 @@ router.delete('/feature-types/:id', auth('admin'), hotelFeatureTypeController.de
 
 // Hotel Feature Routes
 router.post('/features', auth('admin'), hotelFeatureController.createHotelFeature);
-router.get('/:hotelId/features', hotelFeatureController.getHotelFeatures);
+router.get('/features', hotelFeatureController.getHotelFeatures);
+router.get('/features/:id', hotelFeatureController.getHotelFeature); 
+router.put('/:hotelId/features', auth('admin'), hotelFeatureController.updateHotelFeatures);
 router.delete('/features/:id', auth('admin'), hotelFeatureController.deleteHotelFeature);
 
 // Hotel Bed Type Routes
 router.post('/bed-types', auth('admin'), upload.single('icon'), hotelBedTypeController.createHotelBedType);
 router.get('/bed-types', hotelBedTypeController.getHotelBedTypes);
+router.get('/bed-types/all/list', hotelBedTypeController.getAllHotelBedTypes);
 router.get('/bed-types/:id', hotelBedTypeController.getHotelBedType);
 router.put('/bed-types/:id', auth('admin'), upload.single('icon'), hotelBedTypeController.updateHotelBedType);
 router.put('/bed-types/:id/archive', auth('admin'), hotelBedTypeController.archiveHotelBedType);
@@ -97,6 +102,7 @@ router.delete('/bed-types/:id', auth('admin'), hotelBedTypeController.deleteHote
 // Hotel View Type Routes
 router.post('/view-types', auth('admin'), upload.single('icon'), hotelViewTypeController.createHotelViewType);
 router.get('/view-types', hotelViewTypeController.getHotelViewTypes);
+router.get('/view-types/all/list', hotelViewTypeController.getAllHotelViewTypes);
 router.get('/view-types/:id', hotelViewTypeController.getHotelViewType);
 router.put('/view-types/:id', auth('admin'), upload.single('icon'), hotelViewTypeController.updateHotelViewType);
 router.put('/view-types/:id/archive', auth('admin'), hotelViewTypeController.archiveHotelViewType);
@@ -105,7 +111,7 @@ router.delete('/view-types/:id', auth('admin'), hotelViewTypeController.deleteHo
 
 // Hotel Room Type Routes
 router.post('/room-types', auth('admin'), hotelRoomTypeController.createHotelRoomType);
-router.get('/:hotelId/room-types', hotelRoomTypeController.getHotelRoomTypes);
+router.get('/room-types', hotelRoomTypeController.getHotelRoomTypes);
 router.get('/room-types/:id', hotelRoomTypeController.getHotelRoomType);
 router.put('/room-types/:id', auth('admin'), hotelRoomTypeController.updateHotelRoomType);
 router.put('/room-types/:id/archive', auth('admin'), hotelRoomTypeController.archiveHotelRoomType);

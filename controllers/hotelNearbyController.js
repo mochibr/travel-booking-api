@@ -31,9 +31,9 @@ const getHotelNearbyPlaces = async (req, res) => {
       sort_order = 'DESC'
     } = req.query;
 
-    // Convert page and limit to numbers
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    // Convert page and limit to numbers with validation
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(Math.max(1, parseInt(limit)), 100);
     const offset = (pageNum - 1) * limitNum;
 
     // Build filter object (hotel_id is now optional)
@@ -50,16 +50,23 @@ const getHotelNearbyPlaces = async (req, res) => {
     // Get nearby places with filters and pagination
     const result = await HotelNearby.findWithFilters(filters);
     
+    const totalPages = Math.ceil(result.total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
     res.json({
       success: true,
       data: {
         nearbyPlaces: result.data,
         pagination: {
           current_page: pageNum,
-          total_pages: Math.ceil(result.total / limitNum),
-          total_records: result.total,
-          has_next: pageNum < Math.ceil(result.total / limitNum),
-          has_prev: pageNum > 1
+          total_pages: totalPages,
+          total_count: result.total,
+          has_next_page: hasNextPage,
+          has_prev_page: hasPrevPage,
+          next_page: hasNextPage ? pageNum + 1 : null,
+          prev_page: hasPrevPage ? pageNum - 1 : null,
+          limit: limitNum
         }
       }
     });

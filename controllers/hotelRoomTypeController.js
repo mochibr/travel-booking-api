@@ -22,13 +22,32 @@ const createHotelRoomType = async (req, res) => {
 
 const getHotelRoomTypes = async (req, res) => {
   try {
-    const { hotelId } = req.params;
-    
-    const roomTypes = await HotelRoomType.findByHotelId(hotelId);
+    const {
+      hotel_id, // Now optional query parameter
+      search = '',
+      page = 1,
+      limit = 10,
+      sort_by = 'id',
+      sort_order = 'DESC'
+    } = req.query;
+
+    const result = await HotelRoomType.findAllWithPagination(
+      { 
+        hotel_id: hotel_id ? parseInt(hotel_id) : null,
+        search, 
+        page: parseInt(page), 
+        limit: parseInt(limit), 
+        sort_by, 
+        sort_order 
+      }
+    );
     
     res.json({
       success: true,
-      data: { roomTypes }
+      data: {
+        roomTypes: result.roomTypes,
+        pagination: result.pagination
+      }
     });
   } catch (error) {
     console.error('Get hotel room types error:', error);

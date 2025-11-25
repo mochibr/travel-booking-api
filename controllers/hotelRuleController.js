@@ -28,13 +28,53 @@ const createHotelRule = async (req, res) => {
 
 const getHotelRules = async (req, res) => {
   try {
-    const { hotelId } = req.params;
+    const { 
+      hotel_id,
+      search,
+      page = 1,
+      limit = 10,
+      sort_by = 'created_at',
+      sort_order = 'DESC'
+    } = req.query;
+
+    // Convert page and limit to numbers with validation
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(Math.max(1, parseInt(limit)), 100);
+    const offset = (pageNum - 1) * limitNum;
+
+    // Build filter object
+    const filters = {
+      hotel_id: hotel_id ? parseInt(hotel_id) : null,
+      search: search || null,
+      page: pageNum,
+      limit: limitNum,
+      offset: offset,
+      sort_by: sort_by,
+      sort_order: sort_order.toUpperCase()
+    };
+
+    // Get rules with filters and pagination
+    const result = await HotelRule.findWithFilters(filters);
     
-    const rules = await HotelRule.findByHotelId(hotelId);
-    
+    const totalPages = Math.ceil(result.total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
     res.json({
       success: true,
-      data: { rules }
+      data: {
+        rules: result.data,
+        pagination: {
+          current_page: pageNum,
+          total_pages: totalPages,
+          total_count: result.total,
+          has_next_page: hasNextPage,
+          has_prev_page: hasPrevPage,
+          next_page: hasNextPage ? pageNum + 1 : null,
+          prev_page: hasPrevPage ? pageNum - 1 : null,
+          limit: limitNum
+        }
+      }
     });
   } catch (error) {
     console.error('Get hotel rules error:', error);

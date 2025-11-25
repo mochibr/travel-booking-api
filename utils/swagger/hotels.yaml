@@ -872,9 +872,51 @@ paths:
                   items:
                     type: string
                     format: binary
+                alt_text:
+                  type: array
+                  items:
+                    type: string
+                  description: "Alternative texts for each image"
+                  example: ["Front view"]
       responses:
         201:
           description: Images uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "3 nearby place image(s) uploaded successfully"
+                  data:
+                    type: object
+                    properties:
+                      galleryIds:
+                        type: array
+                        items:
+                          type: integer
+                        example: [1, 2, 3]
+                      images:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            galleryId:
+                              type: integer
+                              example: 1
+                            imageUrl:
+                              type: string
+                              example: "https://bucket.s3.region.amazonaws.com/travel/hotel/hotel-nearby-gallery/image1.jpg"
+                            altText:
+                              type: string
+                              example: "Front view"
+                            sortOrder:
+                              type: integer
+                              example: 1
         400:
           description: Validation error
         500:
@@ -899,6 +941,56 @@ paths:
           description: Internal server error
 
   /hotels/nearby/gallery/{id}:
+    put:
+      tags: [Hotel Nearby Gallery]
+      summary: Update a nearby place gallery image
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                alt_text:
+                  type: string
+                  example: "Updated front view"
+                sort_order:
+                  type: integer
+                  example: 2
+                image:
+                  type: string
+                  format: binary
+                  description: "New image file (optional)"
+      responses:
+        200:
+          description: Nearby place image updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Nearby place image updated successfully"
+        404:
+          description: Nearby place image not found
+        400:
+          description: Validation error
+        500:
+          description: Internal server error
+          
     delete:
       tags: [Hotel Nearby Gallery]
       summary: Delete a nearby gallery image
@@ -954,22 +1046,118 @@ paths:
         500:
           description: Internal server error
 
-  /hotels/{hotelId}/rules:
     get:
       tags: [Hotel Rules]
-      summary: Get all rules for a hotel
+      summary: Get all hotel rules with filtering and pagination
       parameters:
-        - name: hotelId
-          in: path
-          required: true
+        - name: hotel_id
+          in: query
+          required: false
           schema:
             type: integer
             example: 1
+          description: The ID of the hotel to get rules for
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "smoking"
+          description: Search term to filter by title
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+            example: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+            example: 10
+          description: Number of records per page
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "id"
+            enum: [id, title, created_at, updated_at]
+            example: "id"
+          description: Field to sort by
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "DESC"
+            enum: [ASC, DESC]
+            example: "DESC"
+          description: Sort order (ASC or DESC)
       responses:
         200:
-          description: List of hotel rules
-        404:
-          description: Hotel not found
+          description: List of hotel rules with pagination
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      rules:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            hotel_id:
+                              type: integer
+                              example: 1
+                            icon:
+                              type: string
+                              example: "https://bucket.s3.region.amazonaws.com/travel/hotel/hotel-rule/icon1.png"
+                            title:
+                              type: string
+                              example: "No Smoking"
+                            created_at:
+                              type: string
+                              format: date-time
+                              example: "2023-01-01T00:00:00.000Z"
+                            updated_at:
+                              type: string
+                              format: date-time
+                              example: "2023-01-01T00:00:00.000Z"
+                      pagination:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          total_pages:
+                            type: integer
+                            example: 5
+                          total_records:
+                            type: integer
+                            example: 48
+                          has_next:
+                            type: boolean
+                            example: true
+                          has_prev:
+                            type: boolean
+                            example: false
         500:
           description: Internal server error
 
@@ -1313,6 +1501,42 @@ paths:
         500:
           description: Internal server error
 
+  /hotels/feature-types/all/list:
+    get:
+      tags: [Hotel Feature Types]
+      summary: Get all hotel feature types without pagination
+      description: Retrieve all hotel feature types in a simple list format, useful for dropdowns and filters
+      responses:
+        200:
+          description: List of all hotel feature types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      featureTypes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: "Swimming Pool"
+                      count:
+                        type: integer
+                        example: 10
+        500:
+          description: Internal server error
+
   /hotels/feature-types/{id}:
     get:
       tags: [Hotel Feature Types]
@@ -1447,9 +1671,12 @@ paths:
                 hotel_id:
                   type: integer
                   example: 1
-                feature_id:
-                  type: integer
-                  example: 1
+                feature_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 3, 4]
+                  description: Array of feature IDs to associate with the hotel
       responses:
         201:
           description: Feature added successfully
@@ -1458,26 +1685,228 @@ paths:
         500:
           description: Internal server error
 
-  /hotels/{hotelId}/features:
     get:
       tags: [Hotel Features]
-      summary: Get all features for a hotel
+      summary: Get all hotel features with pagination and search
       parameters:
-        - name: hotelId
+        - name: hotel_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+          description: Optional hotel ID to filter features by specific hotel
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "pool"
+          description: Search term to filter by feature name or description
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+            example: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+            example: 10
+          description: Number of records per page
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "id"
+            enum: [id, name, hotel_id, created_at, updated_at]
+            example: "id"
+          description: Field to sort by
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "DESC"
+            enum: [ASC, DESC]
+            example: "DESC"
+          description: Sort order (ASC or DESC)
+      responses:
+        200:
+          description: List of hotel features with pagination
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      features:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            hotel_id:
+                              type: integer
+                              example: 1
+                            hotel_name:
+                              type: string
+                              example: "Grand Luxury Hotel"
+                            feature_id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: "Swimming Pool"
+                            icon:
+                              type: string
+                              example: "https://bucket.s3.region.amazonaws.com/features/pool.png"
+                            description:
+                              type: string
+                              example: "Large outdoor swimming pool"
+                            created_at:
+                              type: string
+                              format: date-time
+                              example: "2023-01-01T00:00:00.000Z"
+                            updated_at:
+                              type: string
+                              format: date-time
+                              example: "2023-01-01T00:00:00.000Z"
+                      pagination:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          total_pages:
+                            type: integer
+                            example: 5
+                          total_records:
+                            type: integer
+                            example: 48
+                          has_next:
+                            type: boolean
+                            example: true
+                          has_prev:
+                            type: boolean
+                            example: false
+                          limit:
+                            type: integer
+                            example: 10
+        500:
+          description: Internal server error
+
+  /hotels/features/{id}:
+    get:
+      tags: [Hotel Features]
+      summary: Get a specific hotel feature
+      parameters:
+        - name: id
           in: path
           required: true
           schema:
             type: integer
             example: 1
+          description: The ID of the hotel feature to retrieve
       responses:
         200:
-          description: List of hotel features
+          description: Hotel feature details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      feature:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          hotel_id:
+                            type: integer
+                            example: 1
+                          feature_id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: "Swimming Pool"
+                          icon:
+                            type: string
+                            example: "https://bucket.s3.region.amazonaws.com/features/pool.png"
+                          description:
+                            type: string
+                            example: "Large outdoor swimming pool"
+                          created_at:
+                            type: string
+                            format: date-time
+                            example: "2023-01-01T00:00:00.000Z"
+                          updated_at:
+                            type: string
+                            format: date-time
+                            example: "2023-01-01T00:00:00.000Z"
+        400:
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Feature ID is required"
         404:
-          description: Hotel not found
+          description: Hotel feature not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Hotel feature not found"
         500:
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Failed to fetch hotel feature"
 
-  /hotels/features/{id}:
     delete:
       tags: [Hotel Features]
       summary: Remove feature from hotel
@@ -1587,6 +2016,42 @@ paths:
           description: List of bed types
         400:
           description: Invalid parameters
+        500:
+          description: Internal server error
+
+  /hotels/bed-types/all/list:
+    get:
+      tags: [Hotel Bed Types]
+      summary: Get all hotel bed types without pagination
+      description: Retrieve all hotel bed types in a simple list format, useful for dropdowns and filters
+      responses:
+        200:
+          description: List of all hotel bed types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      bedTypes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: "King Size"
+                      count:
+                        type: integer
+                        example: 5
         500:
           description: Internal server error
 
@@ -1796,6 +2261,42 @@ paths:
         500:
           description: Internal server error
 
+  /hotels/view-types/all/list:
+    get:
+      tags: [Hotel View Types]
+      summary: Get all hotel view types without pagination
+      description: Retrieve all hotel view types in a simple list format, useful for dropdowns and filters
+      responses:
+        200:
+          description: List of all hotel view types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      viewTypes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: "Ocean View"
+                      count:
+                        type: integer
+                        example: 5
+        500:
+          description: Internal server error
+
   /hotels/view-types/{id}:
     get:
       tags: [Hotel View Types]
@@ -1956,23 +2457,147 @@ paths:
           description: Validation error
         500:
           description: Internal server error
-
-  /hotels/{hotelId}/room-types:
+    
     get:
       tags: [Hotel Room Types]
-      summary: Get all room types for a hotel
+      summary: Get all hotel room types with pagination and search
       parameters:
-        - name: hotelId
-          in: path
-          required: true
+        - name: hotel_id
+          in: query
+          required: false
           schema:
             type: integer
             example: 1
+          description: Optional hotel ID to filter room types by specific hotel
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "deluxe"
+          description: Search term to filter by room type name, description, or hotel name
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+            example: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+            example: 10
+          description: Number of records per page
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "id"
+            enum: [id, name, hotel_id, max_occupancy, created_at, updated_at]
+            example: "id"
+          description: Field to sort by
+        - name: sort_order
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "DESC"
+            enum: [ASC, DESC]
+            example: "DESC"
+          description: Sort order (ASC or DESC)
       responses:
         200:
-          description: List of room types
-        404:
-          description: Hotel not found
+          description: List of hotel room types with pagination
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      roomTypes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            hotel_id:
+                              type: integer
+                              example: 1
+                            hotel_name:
+                              type: string
+                              example: "Grand Luxury Hotel"
+                            name:
+                              type: string
+                              example: "Deluxe Room"
+                            description:
+                              type: string
+                              example: "Spacious room with city view"
+                            size_sq_m:
+                              type: number
+                              format: float
+                              example: 45.5
+                            bed_type_id:
+                              type: integer
+                              example: 1
+                            bed_type_name:
+                              type: string
+                              example: "King Size"
+                            view_type_id:
+                              type: integer
+                              example: 1
+                            view_type_name:
+                              type: string
+                              example: "City View"
+                            max_occupancy:
+                              type: integer
+                              example: 3
+                            is_deleted:
+                              type: integer
+                              example: 0
+                            created_at:
+                              type: string
+                              format: date-time
+                              example: "2023-01-01T00:00:00.000Z"
+                            updated_at:
+                              type: string
+                              format: date-time
+                              example: "2023-01-01T00:00:00.000Z"
+                      pagination:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          total_pages:
+                            type: integer
+                            example: 5
+                          total_records:
+                            type: integer
+                            example: 48
+                          has_next:
+                            type: boolean
+                            example: true
+                          has_prev:
+                            type: boolean
+                            example: false
+                          limit:
+                            type: integer
+                            example: 10
         500:
           description: Internal server error
 

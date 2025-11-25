@@ -38,9 +38,12 @@ const getAllVehicleTyres = async (req, res) => {
       sort_order = 'DESC'
     } = req.query;
 
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(Math.max(1, parseInt(limit)), 100);
+
     const filters = {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page: pageNum,
+      limit: limitNum,
       search,
       vehicle_id: vehicle_id || null,
       user_id: user_id || null,
@@ -54,11 +57,24 @@ const getAllVehicleTyres = async (req, res) => {
 
     const result = await VehicleTyre.findAllWithFilters(filters);
     
+    const totalPages = Math.ceil(result.pagination.total / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+
     res.json({
       success: true,
       data: {
         tyres: result.tyres,
-        pagination: result.pagination
+        pagination: {
+          current_page: pageNum,
+          total_pages: totalPages,
+          total_count: result.pagination.total,
+          has_next_page: hasNextPage,
+          has_prev_page: hasPrevPage,
+          next_page: hasNextPage ? pageNum + 1 : null,
+          prev_page: hasPrevPage ? pageNum - 1 : null,
+          limit: limitNum
+        }
       }
     });
   } catch (error) {

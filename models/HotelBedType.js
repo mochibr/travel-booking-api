@@ -72,6 +72,17 @@ class HotelBedType {
     }
   }
 
+  static async findAll() {
+    try {
+      const [rows] = await db.execute(
+        'SELECT id, name FROM hotel_bed_type WHERE is_deleted = 0 ORDER BY id DESC'
+      );
+      return rows;
+    } catch (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+  }
+
   static async findById(id) {
     const [rows] = await db.execute(
       'SELECT * FROM hotel_bed_type WHERE id = ?',

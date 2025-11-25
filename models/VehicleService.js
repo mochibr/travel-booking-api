@@ -149,11 +149,12 @@ class VehicleService {
 
     return {
       services: rows,
+      totalCount: total, 
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
         total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       }
     };
   }

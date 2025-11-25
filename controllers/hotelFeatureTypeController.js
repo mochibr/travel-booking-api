@@ -100,6 +100,26 @@ const getHotelFeatureTypes = async (req, res) => {
   }
 };
 
+const getAllHotelFeatureTypes = async (req, res) => {
+  try {
+    const featureTypes = await HotelFeatureType.findAll();
+    
+    res.json({
+      success: true,
+      data: { 
+        featureTypes,
+        count: featureTypes.length
+      }
+    });
+  } catch (error) {
+    console.error('Get all hotel feature types error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch hotel feature types'
+    });
+  }
+};
+
 const getHotelFeatureType = async (req, res) => {
   try {
     const { id } = req.params;
@@ -260,6 +280,7 @@ const restoreHotelFeatureType = async (req, res) => {
 module.exports = {
   createHotelFeatureType,
   getHotelFeatureTypes,
+  getAllHotelFeatureTypes,
   getHotelFeatureType,
   updateHotelFeatureType,
   deleteHotelFeatureType,

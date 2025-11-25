@@ -38,6 +38,26 @@ const createHotelViewType = async (req, res) => {
   }
 };
 
+const getAllHotelViewTypes = async (req, res) => {
+  try {
+    const viewTypes = await HotelViewType.findAll();
+    
+    res.json({
+      success: true,
+      data: { 
+        viewTypes,
+        count: viewTypes.length
+      }
+    });
+  } catch (error) {
+    console.error('Get all hotel view types error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch hotel view types'
+    });
+  }
+};
+
 const getHotelViewTypes = async (req, res) => {
   try {
     const { 
@@ -259,6 +279,7 @@ const restoreHotelViewType = async (req, res) => {
 
 module.exports = {
   createHotelViewType,
+  getAllHotelViewTypes,
   getHotelViewTypes,
   getHotelViewType,
   updateHotelViewType,
