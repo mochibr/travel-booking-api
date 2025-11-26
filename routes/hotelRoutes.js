@@ -24,7 +24,7 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 50 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
@@ -112,6 +112,8 @@ router.delete('/view-types/:id', auth('admin'), hotelViewTypeController.deleteHo
 // Hotel Room Type Routes
 router.post('/room-types', auth('admin'), hotelRoomTypeController.createHotelRoomType);
 router.get('/room-types', hotelRoomTypeController.getHotelRoomTypes);
+router.get('/room-types/all/list', hotelRoomTypeController.getAllHotelRoomTypes);
+router.get('/room-types/:hotelId/list', hotelRoomTypeController.getHotelRoomTypesByHotelId)
 router.get('/room-types/:id', hotelRoomTypeController.getHotelRoomType);
 router.put('/room-types/:id', auth('admin'), hotelRoomTypeController.updateHotelRoomType);
 router.put('/room-types/:id/archive', auth('admin'), hotelRoomTypeController.archiveHotelRoomType);
@@ -119,13 +121,14 @@ router.put('/room-types/:id/restore', auth('admin'), hotelRoomTypeController.res
 router.delete('/room-types/:id', auth('admin'), hotelRoomTypeController.deleteHotelRoomType);
 
 // Hotel Room Type Gallery Routes
-router.post('/room-types/:roomTypeId/gallery', auth('admin'), upload.array('images', 10), hotelRoomTypeGalleryController.uploadRoomTypeImages);
+router.post('/room-types/:roomTypeId/gallery', auth('admin'), upload.array('images', 100), hotelRoomTypeGalleryController.uploadRoomTypeImages);
 router.get('/room-types/:roomTypeId/gallery', hotelRoomTypeGalleryController.getRoomTypeGallery);
-router.delete('/room-types/gallery/:id', auth('admin'), hotelRoomTypeGalleryController.deleteRoomTypeImage);
+router.put('/room-types/gallery/:id', auth('admin'), upload.single('image'), hotelRoomTypeGalleryController.updateRoomTypeImage);
+router.delete('/room-types/gallery/:id', auth('admin'), hotelRoomTypeGalleryController.deleteRoomTypeImage);;
 
 // Hotel Room Routes
 router.post('/rooms', auth('admin'), hotelRoomController.createHotelRoom);
-router.get('/:hotelId/rooms', hotelRoomController.getHotelRooms);
+router.get('/rooms', hotelRoomController.getHotelRooms);
 router.get('/room-types/:roomTypeId/rooms', hotelRoomController.getHotelRoomsByType);
 router.get('/rooms/:id', hotelRoomController.getHotelRoom);
 router.put('/rooms/:id', auth('admin'), hotelRoomController.updateHotelRoom);
@@ -134,6 +137,7 @@ router.delete('/rooms/:id', auth('admin'), hotelRoomController.deleteHotelRoom);
 // Hotel Amenity Routes
 router.post('/amenities', auth('admin'), upload.single('icon'), hotelAmenityController.createHotelAmenity);
 router.get('/amenities', hotelAmenityController.getHotelAmenities);
+router.get('/amenities/all/list', hotelAmenityController.getAllHotelAmenities);
 router.get('/amenities/:id', hotelAmenityController.getHotelAmenity);
 router.put('/amenities/:id', auth('admin'), upload.single('icon'), hotelAmenityController.updateHotelAmenity);
 router.put('/amenities/:id/archive', auth('admin'), hotelAmenityController.archiveHotelAmenity);
@@ -142,7 +146,9 @@ router.delete('/amenities/:id', auth('admin'), hotelAmenityController.deleteHote
 
 // Hotel Room Amenity Routes
 router.post('/room-amenities', auth('admin'), hotelRoomAmenityController.createHotelRoomAmenity);
-router.get('/rooms/:roomId/amenities', hotelRoomAmenityController.getRoomAmenities);
+router.get('/room-amenities', hotelRoomAmenityController.getRoomAmenities);
+router.get('/room-amenities/:id', hotelRoomAmenityController.getRoomAmenity);
+router.put('/:roomId/room-amenities', auth('admin'), hotelRoomAmenityController.updateRoomAmenities);
 router.delete('/room-amenities/:id', auth('admin'), hotelRoomAmenityController.deleteRoomAmenity);
 
 // Hotel Routes

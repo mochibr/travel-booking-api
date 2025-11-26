@@ -13,27 +13,35 @@ class HotelRoomType {
     return result.insertId;
   }
 
-  static async findAllWithPagination(options = {}) {
-    const {
-      hotel_id = null,
-      search = '',
-      page = 1,
-      limit = 10,
-      sort_by = 'hrt.id',
-      sort_order = 'DESC'
-    } = options;
-
+  static async findAllWithPagination({ 
+    hotel_id = null,
+    search = '',
+    page = 1,
+    limit = 10,
+    sort_by = 'hrt.id',
+    sort_order = 'DESC',
+    is_deleted = 0  // Added this parameter with default value 0
+  }) {
     // Calculate offset
     const offset = (page - 1) * limit;
 
     // Build WHERE clause
-    let whereConditions = ['hrt.is_deleted = 0'];
+    let whereConditions = [];
     const queryParams = [];
+    const countParams = [];
+
+    // Add is_deleted condition
+    if (is_deleted !== undefined && is_deleted !== null) {
+      whereConditions.push('hrt.is_deleted = ?');
+      queryParams.push(is_deleted);
+      countParams.push(is_deleted);
+    }
 
     // Add hotel_id condition if provided
     if (hotel_id) {
       whereConditions.push('hrt.hotel_id = ?');
       queryParams.push(hotel_id);
+      countParams.push(hotel_id);
     }
 
     // Add search condition if provided
@@ -41,6 +49,7 @@ class HotelRoomType {
       whereConditions.push('(hrt.name LIKE ? OR hrt.description LIKE ? OR h.name LIKE ?)');
       const searchTerm = `%${search.trim()}%`;
       queryParams.push(searchTerm, searchTerm, searchTerm);
+      countParams.push(searchTerm, searchTerm, searchTerm);
     }
 
     // Combine WHERE conditions
@@ -49,9 +58,19 @@ class HotelRoomType {
       : '';
 
     // Validate sort_by to prevent SQL injection
-    const allowedSortColumns = ['hrt.id', 'hrt.name', 'hrt.created_at', 'hrt.updated_at', 'hrt.hotel_id', 'h.name', 'hrt.max_occupancy'];
+    const allowedSortColumns = ['hrt.id', 'hrt.name', 'hrt.created_at', 'hrt.updated_at', 'hrt.hotel_id', 'h.name', 'hrt.max_occupancy', 'bed_type_name', 'view_type_name'];
     const safeSortBy = allowedSortColumns.includes(sort_by) ? sort_by : 'hrt.id';
     const safeSortOrder = sort_order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    // Handle table prefix for sort columns
+    let sortColumnWithPrefix = safeSortBy;
+    if (safeSortBy === 'bed_type_name') {
+      sortColumnWithPrefix = 'hbt.name';
+    } else if (safeSortBy === 'view_type_name') {
+      sortColumnWithPrefix = 'hvt.name';
+    } else if (safeSortBy === 'hotel_name') {
+      sortColumnWithPrefix = 'h.name';
+    }
 
     // Main query with pagination
     const query = `
@@ -65,7 +84,7 @@ class HotelRoomType {
       LEFT JOIN hotel_view_type hvt ON hrt.view_type_id = hvt.id 
       LEFT JOIN hotel h ON hrt.hotel_id = h.id
       ${whereClause}
-      ORDER BY ${safeSortBy} ${safeSortOrder}
+      ORDER BY ${sortColumnWithPrefix} ${safeSortOrder}
       LIMIT ? OFFSET ?
     `;
 
@@ -79,7 +98,7 @@ class HotelRoomType {
 
     try {
       // Execute count query first
-      const [countResult] = await db.execute(countQuery, queryParams);
+      const [countResult] = await db.execute(countQuery, countParams);
       const totalRecords = countResult[0].total;
 
       // If no records found, return empty result early
@@ -119,28 +138,36 @@ class HotelRoomType {
     }
   }
 
-// Keep the original method for backward compatibility
-static async findByHotelId(hotelId) {
-  const [rows] = await db.execute(
-    `SELECT hrt.*, hbt.name as bed_type_name, hvt.name as view_type_name 
-     FROM hotel_room_type hrt 
-     LEFT JOIN hotel_bed_type hbt ON hrt.bed_type_id = hbt.id 
-     LEFT JOIN hotel_view_type hvt ON hrt.view_type_id = hvt.id 
-     WHERE hrt.hotel_id = ? AND hrt.is_deleted = 0 
-     ORDER BY hrt.created_at DESC`,
-    [hotelId]
-  );
-  return rows;
-}
+  static async findAll() {
+    try {
+      const [rows] = await db.execute(
+      `SELECT 
+        hrt.id,
+        hrt.hotel_id,
+        hrt.name,
+          h.name AS hotel_name
+        FROM hotel_room_type hrt
+        LEFT JOIN hotel h ON hrt.hotel_id = h.id
+        WHERE 1=1 AND hrt.is_deleted = 0
+        ORDER BY hrt.id DESC`
+      );
+      return rows;
+    } catch (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+  }
 
   static async findByHotelId(hotelId) {
     const [rows] = await db.execute(
-      `SELECT hrt.*, hbt.name as bed_type_name, hvt.name as view_type_name 
-       FROM hotel_room_type hrt 
-       LEFT JOIN hotel_bed_type hbt ON hrt.bed_type_id = hbt.id 
-       LEFT JOIN hotel_view_type hvt ON hrt.view_type_id = hvt.id 
-       WHERE hrt.hotel_id = ? AND hrt.is_deleted = 0 
-       ORDER BY hrt.created_at DESC`,
+      `SELECT 
+          hrt.id,
+          hrt.hotel_id,
+          hrt.name,
+          h.name AS hotel_name
+      FROM hotel_room_type hrt
+      LEFT JOIN hotel h ON hrt.hotel_id = h.id
+      WHERE hrt.hotel_id = ? AND hrt.is_deleted = 0
+      ORDER BY hrt.id DESC`,
       [hotelId]
     );
     return rows;

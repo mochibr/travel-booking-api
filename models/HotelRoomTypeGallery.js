@@ -1,17 +1,33 @@
 const db = require('../config/database');
 
 class HotelRoomTypeGallery {
+  static async getMaxSortOrder(roomTypeId) {
+    const [rows] = await db.execute(
+      'SELECT MAX(sort_order) as maxSortOrder FROM hotel_room_type_gallery WHERE room_type_id = ?',
+      [roomTypeId]
+    );
+    return rows[0].maxSortOrder || 0;
+  }
+
   static async createMultiple(galleryItems) {
     if (galleryItems.length === 0) return [];
     
-    const placeholders = galleryItems.map(() => '(?, ?)').join(', ');
+    const placeholders = galleryItems.map(() => '(?, ?, ?, ?)').join(', ');
     const values = [];
     
     galleryItems.forEach(item => {
-      values.push(item.room_type_id, item.image);
+      values.push(
+        item.room_type_id,
+        item.image_url,
+        item.alt_text || null,
+        item.sort_order || 0
+      );
     });
     
-    const query = `INSERT INTO hotel_room_type_gallery (room_type_id, image) VALUES ${placeholders}`;
+    const query = `
+      INSERT INTO hotel_room_type_gallery (room_type_id, image_url, alt_text, sort_order) 
+      VALUES ${placeholders}
+    `;
     
     const [result] = await db.execute(query, values);
     
@@ -25,10 +41,39 @@ class HotelRoomTypeGallery {
 
   static async findByRoomTypeId(roomTypeId) {
     const [rows] = await db.execute(
-      'SELECT * FROM hotel_room_type_gallery WHERE room_type_id = ? ORDER BY created_at DESC',
+      'SELECT * FROM hotel_room_type_gallery WHERE room_type_id = ? ORDER BY sort_order ASC, created_at DESC',
       [roomTypeId]
     );
     return rows;
+  }
+
+  static async findById(id) {
+    const [rows] = await db.execute(
+      'SELECT * FROM hotel_room_type_gallery WHERE id = ?',
+      [id]
+    );
+    return rows[0] || null;
+  }
+
+  static async update(id, updateData) {
+    if (Object.keys(updateData).length === 0) {
+      return false;
+    }
+
+    const setClause = Object.keys(updateData)
+      .map(key => `${key} = ?`)
+      .join(', ');
+    
+    const values = [...Object.values(updateData), id];
+    
+    const [result] = await db.execute(
+      `UPDATE hotel_room_type_gallery 
+      SET ${setClause}, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = ?`,
+      values
+    );
+    
+    return result.affectedRows > 0;
   }
 
   static async delete(id) {

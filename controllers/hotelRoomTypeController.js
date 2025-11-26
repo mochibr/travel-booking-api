@@ -28,7 +28,8 @@ const getHotelRoomTypes = async (req, res) => {
       page = 1,
       limit = 10,
       sort_by = 'id',
-      sort_order = 'DESC'
+      sort_order = 'DESC',
+      is_deleted = 0
     } = req.query;
 
     const result = await HotelRoomType.findAllWithPagination(
@@ -38,7 +39,8 @@ const getHotelRoomTypes = async (req, res) => {
         page: parseInt(page), 
         limit: parseInt(limit), 
         sort_by, 
-        sort_order 
+        sort_order,
+        is_deleted
       }
     );
     
@@ -51,6 +53,55 @@ const getHotelRoomTypes = async (req, res) => {
     });
   } catch (error) {
     console.error('Get hotel room types error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch hotel room types'
+    });
+  }
+};
+
+const getAllHotelRoomTypes = async (req, res) => {
+  try {
+    const roomTypes = await HotelRoomType.findAll();
+    
+    res.json({
+      success: true,
+      data: { 
+        roomTypes,
+        count: roomTypes.length
+      }
+    });
+  } catch (error) {
+    console.error('Get all hotel room types error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch hotel room types'
+    });
+  }
+};
+
+const getHotelRoomTypesByHotelId = async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    
+    if (!hotelId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Hotel ID is required'
+      });
+    }
+
+    const roomTypes = await HotelRoomType.findByHotelId(hotelId);
+    
+    res.json({
+      success: true,
+      data: { 
+        roomTypes,
+        count: roomTypes.length
+      }
+    });
+  } catch (error) {
+    console.error('Get hotel room types by hotel ID error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch hotel room types'
@@ -187,6 +238,8 @@ const restoreHotelRoomType = async (req, res) => {
 module.exports = {
   createHotelRoomType,
   getHotelRoomTypes,
+  getAllHotelRoomTypes,
+  getHotelRoomTypesByHotelId,
   getHotelRoomType,
   updateHotelRoomType,
   deleteHotelRoomType,

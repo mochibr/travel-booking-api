@@ -18,9 +18,16 @@ const uploadVehicleImages = async (req, res) => {
     let currentSortOrder = maxSortOrder + 1;
 
     // Process alt_text array if provided
-    const altTexts = req.body.alt_text ? 
-      (Array.isArray(req.body.alt_text) ? req.body.alt_text : [req.body.alt_text]) 
-      : [];
+    let altTexts = [];
+    if (req.body.alt_text) {
+      if (Array.isArray(req.body.alt_text)) {
+        altTexts = req.body.alt_text.map(alt => 
+          typeof alt === 'string' ? alt.split(',')[0] : alt
+        );
+      } else {
+        altTexts = req.body.alt_text.split(',').map(alt => alt.trim());
+      }
+    }
 
     // Upload all images to S3 and prepare gallery data
     const galleryItems = [];

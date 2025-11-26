@@ -11,8 +11,8 @@ const options = {
     servers: [
       {
         // url: 'http://localhost:3000/api/v1',
-        url: 'http://192.168.1.7:3000/api/v1',
-        description: 'Development server',
+        url: 'http://192.168.1.37:3000/api/v1',
+        description: 'Development servers',
       },
     ],
   },

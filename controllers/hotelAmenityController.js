@@ -100,6 +100,26 @@ const getHotelAmenities = async (req, res) => {
   }
 };
 
+const getAllHotelAmenities = async (req, res) => {
+  try {
+    const amenities = await HotelAmenity.findAll();
+    
+    res.json({
+      success: true,
+      data: { 
+        amenities,
+        count: amenities.length
+      }
+    });
+  } catch (error) {
+    console.error('Get all hotel amenities error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch hotel amenities'
+    });
+  }
+};
+
 const getHotelAmenity = async (req, res) => {
   try {
     const { id } = req.params;
@@ -260,6 +280,7 @@ const restoreHotelAmenity = async (req, res) => {
 module.exports = {
   createHotelAmenity,
   getHotelAmenities,
+  getAllHotelAmenities,
   getHotelAmenity,
   updateHotelAmenity,
   deleteHotelAmenity,
