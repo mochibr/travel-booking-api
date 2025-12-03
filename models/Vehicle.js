@@ -168,6 +168,35 @@ class Vehicle {
     }
   }
 
+  static async findAllWithoutPagination() {
+    /*let query = `
+      SELECT 
+        v.id,
+        v.title,
+        v.make,
+        v.model,
+        v.registration_number,
+        v.feature_image,
+        vt.name as vehicle_type_name,
+        u.name as user_name
+      FROM vehicles v 
+      LEFT JOIN vehicle_types vt ON v.vehicle_type_id = vt.id 
+      LEFT JOIN users u ON v.user_id = u.id 
+      ORDER BY v.id Desc
+    `;*/
+    
+    let query = `
+      SELECT 
+        v.id,
+        v.title
+      FROM vehicles v
+      ORDER BY v.id Desc
+    `;
+
+    const [rows] = await db.execute(query);
+    return rows;
+  }
+
   static async findById(id) {
     let query = `
       SELECT 

@@ -147,6 +147,7 @@ router.delete('/amenities/:id', auth('admin'), hotelAmenityController.deleteHote
 // Hotel Room Amenity Routes
 router.post('/room-amenities', auth('admin'), hotelRoomAmenityController.createHotelRoomAmenity);
 router.get('/room-amenities', hotelRoomAmenityController.getRoomAmenities);
+router.get('/room-amenities/:roomId/lists', hotelRoomAmenityController.getRoomAmenitiesByRoomId);
 router.get('/room-amenities/:id', hotelRoomAmenityController.getRoomAmenity);
 router.put('/:roomId/room-amenities', auth('admin'), hotelRoomAmenityController.updateRoomAmenities);
 router.delete('/room-amenities/:id', auth('admin'), hotelRoomAmenityController.deleteRoomAmenity);

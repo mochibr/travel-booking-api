@@ -56,6 +56,7 @@ router.delete('/:vehicle_id/gallery', auth('admin'), vehicleOverviewController.d
 // Vehicle Routes
 router.post('/', auth('admin'), upload.single('feature_image'), validateCreateVehicle, vehicleController.createVehicle);
 router.get('/', validateVehicleQuery, vehicleController.getVehicles);
+router.get('/all/lists', vehicleController.getAllVehiclesWithoutPagination);
 
 // 👇 Move all /services routes above /:id
 router.post('/services', auth('admin'), validateCreateVehicleService, vehicleServiceController.createVehicleService);

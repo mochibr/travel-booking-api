@@ -3910,6 +3910,105 @@ paths:
         500:
           description: Internal server error
 
+  /hotels/room-amenities/{roomId}/lists:
+    get:
+      tags: [Hotel Room Amenities]
+      summary: Get all amenities for a specific room without pagination
+      description: Retrieve all amenities for a specific hotel room in a simple list format
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: The ID of the room to get amenities for
+      responses:
+        200:
+          description: List of amenities for the specified room
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      amenities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            room_id:
+                              type: integer
+                              example: 1
+                            amenity_id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: "Free WiFi"
+                            icon:
+                              type: string
+                              example: "https://bucket.s3.region.amazonaws.com/amenities/wifi.png"
+                            room_number:
+                              type: string
+                              example: "101"
+                            room_title:
+                              type: string
+                              example: "Deluxe Room 101"
+                            hotel_name:
+                              type: string
+                              example: "Grand Luxury Hotel"
+                            room_type_name:
+                              type: string
+                              example: "Deluxe Room"
+                            created_at:
+                              type: string
+                              format: date-time
+                              example: "2023-01-01T00:00:00.000Z"
+                            updated_at:
+                              type: string
+                              format: date-time
+                              example: "2023-01-01T00:00:00.000Z"
+                      count:
+                        type: integer
+                        example: 5
+        400:
+          description: Room ID is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Room ID is required"
+        404:
+          description: No amenities found for the specified room
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "No amenities found for this room"
+        500:
+          description: Internal server error
+
   /hotels/{roomId}/room-amenities:
     put:
       tags: [Hotel Room Amenities]

@@ -9,28 +9,18 @@ class HotelFeature {
       throw new Error('hotel_id and feature_ids array are required');
     }
 
-    const connection = await db.getConnection();
-    
     try {
-      // Start transaction using connection.query instead of execute
-      await connection.query('START TRANSACTION');
-
-      const insertQuery = `INSERT INTO hotel_feature (hotel_id, feature_id) VALUES ?`;
-      const values = feature_ids.map(feature_id => [hotel_id, feature_id]);
+      // Convert array to comma-separated string
+      const featureIdsString = feature_ids.join(',');
       
-      const [result] = await connection.query(insertQuery, [values]);
+      const [result] = await db.execute(
+        'INSERT INTO hotel_feature (hotel_id, feature_id) VALUES (?, ?)',
+        [hotel_id, featureIdsString]
+      );
       
-      // Commit transaction
-      await connection.query('COMMIT');
-      
-      return result.insertId; // Returns the first insert ID
+      return result.insertId;
     } catch (error) {
-      // Rollback transaction on error
-      await connection.query('ROLLBACK');
-      throw error;
-    } finally {
-      // Always release the connection back to the pool
-      connection.release();
+      throw new Error(`Failed to create hotel features: ${error.message}`);
     }
   }
 
@@ -40,33 +30,33 @@ class HotelFeature {
       throw new Error('hotel_id and feature_ids array are required');
     }
 
-    const connection = await db.getConnection();
-    
     try {
-      // Start transaction
-      await connection.query('START TRANSACTION');
-
-      // First, delete all existing features for this hotel
-      await connection.query('DELETE FROM hotel_feature WHERE hotel_id = ?', [hotelId]);
-
-      // If featureIds array is not empty, insert the new features
-      if (featureIds.length > 0) {
-        const insertQuery = `INSERT INTO hotel_feature (hotel_id, feature_id) VALUES ?`;
-        const values = featureIds.map(featureId => [hotelId, featureId]);
-        await connection.query(insertQuery, [values]);
-      }
-
-      // Commit transaction
-      await connection.query('COMMIT');
+      // Convert array to comma-separated string
+      const featureIdsString = featureIds.join(',');
       
-      return true;
+      // Check if record exists for this hotel
+      const [existing] = await db.execute(
+        'SELECT id FROM hotel_feature WHERE hotel_id = ?',
+        [hotelId]
+      );
+
+      if (existing.length > 0) {
+        // Update existing record
+        const [result] = await db.execute(
+          'UPDATE hotel_feature SET feature_id = ?, updated_at = CURRENT_TIMESTAMP WHERE hotel_id = ?',
+          [featureIdsString, hotelId]
+        );
+        return result.affectedRows > 0;
+      } else {
+        // Create new record
+        const [result] = await db.execute(
+          'INSERT INTO hotel_feature (hotel_id, feature_id) VALUES (?, ?)',
+          [hotelId, featureIdsString]
+        );
+        return result.insertId;
+      }
     } catch (error) {
-      // Rollback transaction on error
-      await connection.query('ROLLBACK');
-      throw error;
-    } finally {
-      // Always release the connection back to the pool
-      connection.release();
+      throw new Error(`Failed to update hotel features: ${error.message}`);
     }
   }
 
@@ -95,7 +85,7 @@ class HotelFeature {
 
     // Add search condition if provided
     if (search) {
-      whereConditions.push('(hft.name LIKE ? OR h.name LIKE ?)');
+      whereConditions.push('(h.name LIKE ? OR hf.feature_id LIKE ?)');
       const searchTerm = `%${search}%`;
       queryParams.push(searchTerm, searchTerm);
     }
@@ -106,7 +96,7 @@ class HotelFeature {
       : '';
 
     // Validate sort_by to prevent SQL injection
-    const allowedSortColumns = ['hf.id', 'hft.name', 'hf.created_at', 'hf.updated_at', 'hf.hotel_id', 'h.name'];
+    const allowedSortColumns = ['hf.id', 'h.name', 'hf.created_at', 'hf.updated_at', 'hf.hotel_id'];
     const safeSortBy = allowedSortColumns.includes(sort_by) ? sort_by : 'hf.id';
     const safeSortOrder = sort_order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
@@ -118,12 +108,9 @@ class HotelFeature {
         hf.feature_id,
         hf.created_at,
         hf.updated_at,
-        hft.name,
-        hft.icon,
         h.name as hotel_name
       FROM hotel_feature hf 
-      JOIN hotel_feature_type hft ON hf.feature_id = hft.id 
-      LEFT JOIN hotel h ON hf.hotel_id = h.id
+      JOIN hotel h ON hf.hotel_id = h.id
       ${whereClause}
       ORDER BY ${safeSortBy} ${safeSortOrder}
       LIMIT ? OFFSET ?
@@ -133,24 +120,47 @@ class HotelFeature {
     const countQuery = `
       SELECT COUNT(*) as total
       FROM hotel_feature hf 
-      JOIN hotel_feature_type hft ON hf.feature_id = hft.id 
-      LEFT JOIN hotel h ON hf.hotel_id = h.id
+      JOIN hotel h ON hf.hotel_id = h.id
       ${whereClause}
     `;
 
     try {
-      // console.log('Executing query with params:', [...queryParams, parseInt(limit), offset]);
-      // console.log('Query:', query);
-      
       // Execute both queries
       const [features] = await db.execute(query, [...queryParams, parseInt(limit), offset]);
+      
+      // For each feature record, get the individual feature details
+      const featuresWithDetails = await Promise.all(
+        features.map(async (feature) => {
+          const featureIds = feature.feature_id.split(',').map(id => parseInt(id.trim()));
+          
+          if (featureIds.length === 0) {
+            return {
+              ...feature,
+              features: []
+            };
+          }
+
+          // Get feature details for each ID
+          const placeholders = featureIds.map(() => '?').join(',');
+          const [featureDetails] = await db.execute(
+            `SELECT id, name, icon FROM hotel_feature_type WHERE id IN (${placeholders})`,
+            featureIds
+          );
+
+          return {
+            ...feature,
+            features: featureDetails
+          };
+        })
+      );
+
       const [countResult] = await db.execute(countQuery, queryParams);
 
       const totalRecords = countResult[0].total;
       const totalPages = Math.ceil(totalRecords / limit);
 
       return {
-        features,
+        features: featuresWithDetails,
         pagination: {
           current_page: parseInt(page),
           total_pages: totalPages,
@@ -175,37 +185,90 @@ class HotelFeature {
           hf.feature_id,
           hf.created_at,
           hf.updated_at,
-          hft.name,
-          hft.icon
+          h.name as hotel_name
         FROM hotel_feature hf 
-        JOIN hotel_feature_type hft ON hf.feature_id = hft.id 
+        JOIN hotel h ON hf.hotel_id = h.id
         WHERE hf.id = ?`,
         [id]
       );
-      return rows.length > 0 ? rows[0] : null;
+
+      if (rows.length === 0) {
+        return null;
+      }
+
+      const hotelFeature = rows[0];
+      const featureIds = hotelFeature.feature_id.split(',').map(id => parseInt(id.trim()));
+      
+      if (featureIds.length === 0) {
+        return {
+          ...hotelFeature,
+          features: []
+        };
+      }
+
+      // Get feature details for each ID
+      const placeholders = featureIds.map(() => '?').join(',');
+      const [featureDetails] = await db.execute(
+        `SELECT id, name, icon FROM hotel_feature_type WHERE id IN (${placeholders})`,
+        featureIds
+      );
+
+      return {
+        ...hotelFeature,
+        features: featureDetails
+      };
     } catch (error) {
       throw new Error(`Failed to fetch hotel feature: ${error.message}`);
     }
   }
 
-  // Keep the original method for backward compatibility
   static async findByHotelId(hotelId) {
-    const [rows] = await db.execute(
-      `SELECT 
-        hf.id,
-        hf.hotel_id,
-        hf.feature_id,
-        hf.created_at,
-        hf.updated_at,
-        hft.name,
-        hft.icon,
-        hft.description
-      FROM hotel_feature hf 
-      JOIN hotel_feature_type hft ON hf.feature_id = hft.id 
-      WHERE hf.hotel_id = ?`,
-      [hotelId]
-    );
-    return rows;
+    try {
+      const [rows] = await db.execute(
+        `SELECT 
+          hf.id,
+          hf.hotel_id,
+          hf.feature_id,
+          hf.created_at,
+          hf.updated_at,
+          h.name as hotel_name
+        FROM hotel_feature hf 
+        JOIN hotel h ON hf.hotel_id = h.id
+        WHERE hf.hotel_id = ?`,
+        [hotelId]
+      );
+
+      if (rows.length === 0) {
+        return [];
+      }
+
+      const hotelFeature = rows[0];
+      const featureIds = hotelFeature.feature_id.split(',').map(id => parseInt(id.trim()));
+      
+      if (featureIds.length === 0) {
+        return [];
+      }
+
+      // Get feature details for each ID
+      const placeholders = featureIds.map(() => '?').join(',');
+      const [featureDetails] = await db.execute(
+        `SELECT id, name, icon FROM hotel_feature_type WHERE id IN (${placeholders})`,
+        featureIds
+      );
+
+      return featureDetails.map(feature => ({
+        id: hotelFeature.id,
+        hotel_id: hotelFeature.hotel_id,
+        feature_id: feature.id,
+        name: feature.name,
+        icon: feature.icon,
+        hotel_name: hotelFeature.hotel_name,
+        created_at: hotelFeature.created_at,
+        updated_at: hotelFeature.updated_at
+      }));
+    } catch (error) {
+      throw new Error(`Failed to fetch hotel features by hotel ID: ${error.message}`);
+    }
   }
 
   static async delete(id) {

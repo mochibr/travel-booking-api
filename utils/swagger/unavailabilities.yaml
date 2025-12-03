@@ -1,0 +1,211 @@
+# unavailabilities.yaml
+openapi: 3.0.0
+info:
+  title: Unavailability Management API
+  version: 1.0.0
+  description: API for managing unavailability periods for drivers, hotels, and vehicles
+
+tags:
+  - name: Unavailabilities
+    description: Unavailability period management
+
+paths:
+  /unavailabilities:
+    post:
+      tags: [Unavailabilities]
+      summary: Create a new unavailability period
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reference_id
+                - reference_type
+                - start_datetime
+                - end_datetime
+              properties:
+                reference_id:
+                  type: integer
+                  example: 1
+                  description: "ID of the driver, hotel, or vehicle"
+                reference_type:
+                  type: string
+                  enum: [Driver, Hotel, Vehicle]
+                  example: "Driver"
+                  description: "Type of reference"
+                start_datetime:
+                  type: string
+                  format: date-time
+                  example: "2024-01-15T10:00:00Z"
+                  description: "Start date and time of unavailability"
+                end_datetime:
+                  type: string
+                  format: date-time
+                  example: "2024-01-20T18:00:00Z"
+                  description: "End date and time of unavailability"
+                reason:
+                  type: string
+                  example: "Annual leave"
+                  description: "Reason for unavailability"
+      responses:
+        201:
+          description: Unavailability created successfully
+        400:
+          description: Validation error or overlapping period
+        500:
+          description: Internal server error
+
+    get:
+      tags: [Unavailabilities]
+      summary: Get all unavailabilities with filters
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: reference_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: reference_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [Driver, Hotel, Vehicle]
+        - name: start_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: List of unavailabilities
+        500:
+          description: Internal server error
+
+  /unavailabilities/{id}:
+    get:
+      tags: [Unavailabilities]
+      summary: Get a specific unavailability
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Unavailability details
+        404:
+          description: Unavailability not found
+        500:
+          description: Internal server error
+
+    put:
+      tags: [Unavailabilities]
+      summary: Update an unavailability
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reference_id:
+                  type: integer
+                reference_type:
+                  type: string
+                  enum: [Driver, Hotel, Vehicle]
+                start_datetime:
+                  type: string
+                  format: date-time
+                end_datetime:
+                  type: string
+                  format: date-time
+                reason:
+                  type: string
+      responses:
+        200:
+          description: Unavailability updated successfully
+        400:
+          description: Validation error or overlapping period
+        404:
+          description: Unavailability not found
+        500:
+          description: Internal server error
+
+    delete:
+      tags: [Unavailabilities]
+      summary: Delete an unavailability
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Unavailability deleted successfully
+        404:
+          description: Unavailability not found
+        500:
+          description: Internal server error
+
+  /unavailabilities/reference/{reference_id}/{reference_type}:
+    get:
+      tags: [Unavailabilities]
+      summary: Get unavailabilities by reference
+      parameters:
+        - name: reference_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: reference_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [Driver, Hotel, Vehicle]
+      responses:
+        200:
+          description: List of unavailabilities for reference
+        500:
+          description: Internal server error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

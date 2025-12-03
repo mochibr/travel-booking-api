@@ -215,6 +215,99 @@ class Hotel {
       WHERE h.id = ?`,
       [id]
     );
+
+const hotelId = rows[0].id;
+
+// =============================================
+// GET hotel_nearby
+// =============================================
+const [hotelNearByDetails] = await db.execute(
+  `SELECT * FROM hotel_nearby WHERE hotel_id = ${hotelId}`
+);
+
+// =============================================
+// GET hotel_feature (for feature_id list)
+// =============================================
+const [hotelFeatureRows] = await db.execute(
+  `SELECT * FROM hotel_feature WHERE hotel_id = ${hotelId}`
+);
+
+let featureList = [];
+
+if (hotelFeatureRows.length > 0) {
+  const featureIds = hotelFeatureRows[0].feature_id
+    ? hotelFeatureRows[0].feature_id.split(',').map(id => parseInt(id.trim()))
+    : [];
+
+  if (featureIds.length > 0) {
+    const placeholders = featureIds.map(() => '?').join(',');
+    const [featureDetails] = await db.execute(
+      `SELECT id, name, icon FROM hotel_feature_type WHERE id IN (${placeholders})`,
+      featureIds
+    );
+
+    featureList = featureDetails;
+  }
+}
+
+// When hotel_nearby is empty → return with all other data
+if (!hotelNearByDetails.length) {
+  const [hotelGallery] = await db.execute(
+    `SELECT * FROM hotel_gallery WHERE hotel_id = ${hotelId}`
+  );
+
+  const [hotelRule] = await db.execute(
+    `SELECT * FROM hotel_rule WHERE hotel_id = ${hotelId}`
+  );
+
+  return {
+    ...rows[0],
+    hotelNearBy: [],
+    hotelRule: hotelRule.length ? hotelRule : [],
+    hotelGallery: hotelGallery.length ? hotelGallery : [],
+    hotelFeatures: featureList.length ? featureList : []
+  };
+}
+
+// =============================================
+// GET hotel_nearby_gallery
+// =============================================
+const hotelNearByGalleryId = hotelNearByDetails[0].id;
+
+const [hotelNearByGallery] = await db.execute(
+  `SELECT * FROM hotel_nearby_gallery WHERE hotel_nearby_id = ${hotelNearByGalleryId}`
+);
+
+hotelNearByDetails[0].gallery =
+  hotelNearByGallery.length ? hotelNearByGallery : [];
+
+// =============================================
+// GET hotel_rule
+// =============================================
+const [hotelRule] = await db.execute(
+  `SELECT * FROM hotel_rule WHERE hotel_id = ${hotelId}`
+);
+
+// =============================================
+// GET hotel_gallery
+// =============================================
+const [hotelGallery] = await db.execute(
+  `SELECT * FROM hotel_gallery WHERE hotel_id = ${hotelId}`
+);
+
+// =============================================
+// FINAL RETURN
+// =============================================
+return {
+  ...rows[0],
+  hotelNearBy: hotelNearByDetails,
+  hotelRule: hotelRule.length ? hotelRule : [],
+  hotelGallery: hotelGallery.length ? hotelGallery : [],
+  hotelFeatures: featureList.length ? featureList : []
+};
+
+
+
     return rows[0];
   }
   

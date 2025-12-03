@@ -102,6 +102,24 @@ const getVehicles = async (req, res) => {
     });
   }
 };
+
+const getAllVehiclesWithoutPagination = async (req, res) => {
+  try {
+    const vehicles = await Vehicle.findAllWithoutPagination();
+
+    res.json({
+      success: true,
+      data: { vehicles }
+    });
+  } catch (error) {
+    console.error('Get all vehicles without pagination error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch vehicles'
+    });
+  }
+};
+
 const getVehicle = async (req, res) => {
   try {
     const { id } = req.params;
@@ -217,6 +235,7 @@ const deleteVehicle = async (req, res) => {
 module.exports = {
   createVehicle,
   getVehicles,
+  getAllVehiclesWithoutPagination,
   getVehicle,
   updateVehicle,
   deleteVehicle

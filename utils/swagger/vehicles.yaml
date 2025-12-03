@@ -890,20 +890,14 @@ paths:
                     type: string
                     example: "Failed to fetch vehicles"
 
-  /vehicles/{id}:
+  /vehicles/all/lists:
     get:
       tags: [Vehicles]
-      summary: Get a specific vehicle
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            example: 1
+      summary: Get all vehicles without pagination
+      description: Retrieve all vehicles in a simple list format without pagination or search filters
       responses:
         200:
-          description: Vehicle details
+          description: Successfully retrieved all vehicles
           content:
             application/json:
               schema:
@@ -915,55 +909,70 @@ paths:
                   data:
                     type: object
                     properties:
-                      vehicle:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                            example: 1
-                          user_id:
-                            type: integer
-                            example: 1
-                          vehicle_type_id:
-                            type: integer
-                            example: 1
-                          vehicle_type_name:
-                            type: string
-                            example: "Sedan"
-                          make:
-                            type: string
-                            example: "Toyota"
-                          title:
-                            type: string
-                            example: "Toyota Camry 2023"
-                          model:
-                            type: string
-                            example: "Camry"
-                          year_manufactured:
-                            type: integer
-                            example: 2023
-                          color:
-                            type: string
-                            example: "White"
-                          fuel_type:
-                            type: string
-                            example: "Petrol"
-                          registration_number:
-                            type: string
-                            example: "ABC123"
-                          feature_image:
-                            type: string
-                            example: "https://bucket.s3.region.amazonaws.com/vehicles/image.jpg"
-                          created_at:
-                            type: string
-                            format: date-time
-                          updated_at:
-                            type: string
-                            format: date-time
-        404:
-          description: Vehicle not found
+                      vehicles:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            title:
+                              type: string
+                              example: "Toyota Camry 2023"
         500:
           description: Internal server error
+          
+    /vehicles/{id}:
+      get:
+        tags: [Vehicles]
+        summary: Get a specific vehicle
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: integer
+              example: 1
+        responses:
+          200:
+            description: Vehicle details
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    data:
+                      type: object
+                      properties:
+                        vehicle:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            user_id:
+                              type: integer
+                              example: 1
+                            vehicle_type_id:
+                              type: integer
+                              example: 1
+                            vehicle_type_name:
+                              type: string
+                              example: "Sedan"
+                            make:
+                              type: string
+                              example: "Toyota"
+                            title:
+                              type: string
+                              example: "Toyota Camry 2023"
+          404:
+            description: Vehicle not found
+          500:
+            description: Internal server error
 
     put:
       tags: [Vehicles]

@@ -3,7 +3,6 @@ const HotelRoomAmenity = require('../models/HotelRoomAmenity');
 const createHotelRoomAmenity = async (req, res) => {
   try {
     const { room_id, amenity_ids } = req.body;
-    console.log(req.body);
 
     // Validate required fields
     if (!room_id || !amenity_ids || !Array.isArray(amenity_ids)) {
@@ -96,6 +95,36 @@ const getRoomAmenities = async (req, res) => {
   }
 };
 
+const getRoomAmenitiesByRoomId = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+
+    // Validate required field
+    if (!roomId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Room ID is required'
+      });
+    }
+
+    const amenities = await HotelRoomAmenity.findByRoomId(roomId);
+    
+    res.json({
+      success: true,
+      data: { 
+        amenities,
+        count: amenities.length
+      }
+    });
+  } catch (error) {
+    console.error('Get room amenities by room ID error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch room amenities'
+    });
+  }
+};
+
 const getRoomAmenity = async (req, res) => {
   try {
     const { id } = req.params;
@@ -159,6 +188,7 @@ module.exports = {
   createHotelRoomAmenity,
   updateRoomAmenities,
   getRoomAmenities,
+  getRoomAmenitiesByRoomId,
   getRoomAmenity,
   deleteRoomAmenity
 };

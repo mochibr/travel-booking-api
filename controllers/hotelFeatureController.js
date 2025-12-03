@@ -3,7 +3,6 @@ const HotelFeature = require('../models/HotelFeature');
 const createHotelFeature = async (req, res) => {
   try {
     const { hotel_id, feature_ids } = req.body;
-    console.log(req.body);
 
     // Validate required fields
     if (!hotel_id || !feature_ids || !Array.isArray(feature_ids)) {
@@ -108,7 +107,6 @@ const getHotelFeature = async (req, res) => {
       });
     }
 
-    // You'll need to add a findById method to your HotelFeature model
     const feature = await HotelFeature.findById(id);
     
     if (!feature) {
@@ -127,6 +125,36 @@ const getHotelFeature = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch hotel feature'
+    });
+  }
+};
+
+const getHotelFeaturesByHotelId = async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+
+    // Validate required field
+    if (!hotelId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Hotel ID is required'
+      });
+    }
+
+    const features = await HotelFeature.findByHotelId(hotelId);
+    
+    res.json({
+      success: true,
+      data: { 
+        features,
+        count: features.length
+      }
+    });
+  } catch (error) {
+    console.error('Get hotel features by hotel ID error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch hotel features'
     });
   }
 };
@@ -161,5 +189,6 @@ module.exports = {
   updateHotelFeatures,
   getHotelFeatures,
   getHotelFeature,
+  getHotelFeaturesByHotelId,
   deleteHotelFeature
 };

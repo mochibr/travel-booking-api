@@ -9,28 +9,18 @@ class HotelRoomAmenity {
       throw new Error('room_id and amenity_ids array are required');
     }
 
-    const connection = await db.getConnection();
-    
     try {
-      // Start transaction using connection.query instead of execute
-      await connection.query('START TRANSACTION');
-
-      const insertQuery = `INSERT INTO hotel_room_amenity (room_id, amenity_id) VALUES ?`;
-      const values = amenity_ids.map(amenity_id => [room_id, amenity_id]);
+      // Convert array to comma-separated string
+      const amenityIdsString = amenity_ids.join(',');
       
-      const [result] = await connection.query(insertQuery, [values]);
+      const [result] = await db.execute(
+        'INSERT INTO hotel_room_amenity (room_id, amenity_id) VALUES (?, ?)',
+        [room_id, amenityIdsString]
+      );
       
-      // Commit transaction
-      await connection.query('COMMIT');
-      
-      return result.insertId; // Returns the first insert ID
+      return result.insertId;
     } catch (error) {
-      // Rollback transaction on error
-      await connection.query('ROLLBACK');
-      throw error;
-    } finally {
-      // Always release the connection back to the pool
-      connection.release();
+      throw new Error(`Failed to create room amenities: ${error.message}`);
     }
   }
 
@@ -40,33 +30,33 @@ class HotelRoomAmenity {
       throw new Error('room_id and amenity_ids array are required');
     }
 
-    const connection = await db.getConnection();
-    
     try {
-      // Start transaction
-      await connection.query('START TRANSACTION');
-
-      // First, delete all existing amenities for this room
-      await connection.query('DELETE FROM hotel_room_amenity WHERE room_id = ?', [roomId]);
-
-      // If amenityIds array is not empty, insert the new amenities
-      if (amenityIds.length > 0) {
-        const insertQuery = `INSERT INTO hotel_room_amenity (room_id, amenity_id) VALUES ?`;
-        const values = amenityIds.map(amenityId => [roomId, amenityId]);
-        await connection.query(insertQuery, [values]);
-      }
-
-      // Commit transaction
-      await connection.query('COMMIT');
+      // Convert array to comma-separated string
+      const amenityIdsString = amenityIds.join(',');
       
-      return true;
+      // Check if record exists for this room
+      const [existing] = await db.execute(
+        'SELECT id FROM hotel_room_amenity WHERE room_id = ?',
+        [roomId]
+      );
+
+      if (existing.length > 0) {
+        // Update existing record
+        const [result] = await db.execute(
+          'UPDATE hotel_room_amenity SET amenity_id = ?, updated_at = CURRENT_TIMESTAMP WHERE room_id = ?',
+          [amenityIdsString, roomId]
+        );
+        return result.affectedRows > 0;
+      } else {
+        // Create new record
+        const [result] = await db.execute(
+          'INSERT INTO hotel_room_amenity (room_id, amenity_id) VALUES (?, ?)',
+          [roomId, amenityIdsString]
+        );
+        return result.insertId;
+      }
     } catch (error) {
-      // Rollback transaction on error
-      await connection.query('ROLLBACK');
-      throw error;
-    } finally {
-      // Always release the connection back to the pool
-      connection.release();
+      throw new Error(`Failed to update room amenities: ${error.message}`);
     }
   }
 
@@ -118,13 +108,13 @@ class HotelRoomAmenity {
         hra.amenity_id,
         hra.created_at,
         hra.updated_at,
-        ha.name,
-        ha.icon,
         hr.room_number,
-        hr.title as room_title
+        hr.title as room_title,
+        h.name as hotel_name
       FROM hotel_room_amenity hra 
-      JOIN hotel_amenity ha ON hra.amenity_id = ha.id 
       JOIN hotel_room hr ON hra.room_id = hr.id
+      JOIN hotel_room_type hrt ON hr.room_type_id = hrt.id
+      JOIN hotel h ON hrt.hotel_id = h.id
       ${whereClause}
       ORDER BY ${safeSortBy} ${safeSortOrder}
       LIMIT ? OFFSET ?
@@ -134,21 +124,49 @@ class HotelRoomAmenity {
     const countQuery = `
       SELECT COUNT(*) as total
       FROM hotel_room_amenity hra 
-      JOIN hotel_amenity ha ON hra.amenity_id = ha.id 
       JOIN hotel_room hr ON hra.room_id = hr.id
+      JOIN hotel_room_type hrt ON hr.room_type_id = hrt.id
+      JOIN hotel h ON hrt.hotel_id = h.id
       ${whereClause}
     `;
 
     try {
       // Execute both queries
       const [amenities] = await db.execute(query, [...queryParams, parseInt(limit), offset]);
+      
+      // For each amenity, get the individual amenity details
+      const amenitiesWithDetails = await Promise.all(
+        amenities.map(async (amenity) => {
+          const amenityIds = amenity.amenity_id.split(',').map(id => parseInt(id.trim()));
+          
+          if (amenityIds.length === 0) {
+            return {
+              ...amenity,
+              amenities: []
+            };
+          }
+
+          // Get amenity details for each ID
+          const placeholders = amenityIds.map(() => '?').join(',');
+          const [amenityDetails] = await db.execute(
+            `SELECT id, name, icon FROM hotel_amenity WHERE id IN (${placeholders})`,
+            amenityIds
+          );
+
+          return {
+            ...amenity,
+            amenities: amenityDetails
+          };
+        })
+      );
+
       const [countResult] = await db.execute(countQuery, queryParams);
 
       const totalRecords = countResult[0].total;
       const totalPages = Math.ceil(totalRecords / limit);
 
       return {
-        amenities,
+        amenities: amenitiesWithDetails,
         pagination: {
           current_page: parseInt(page),
           total_pages: totalPages,
@@ -164,6 +182,63 @@ class HotelRoomAmenity {
     }
   }
 
+  static async findByRoomId(roomId) {
+    try {
+      const [rows] = await db.execute(
+        `SELECT 
+          hra.id,
+          hra.room_id,
+          hra.amenity_id,
+          hra.created_at,
+          hra.updated_at,
+          hr.room_number,
+          hr.title as room_title,
+          h.name as hotel_name,
+          hrt.name as room_type_name
+        FROM hotel_room_amenity hra 
+        JOIN hotel_room hr ON hra.room_id = hr.id
+        JOIN hotel_room_type hrt ON hr.room_type_id = hrt.id
+        JOIN hotel h ON hrt.hotel_id = h.id
+        WHERE hra.room_id = ?`,
+        [roomId]
+      );
+
+      if (rows.length === 0) {
+        return [];
+      }
+
+      const roomAmenity = rows[0];
+      const amenityIds = roomAmenity.amenity_id.split(',').map(id => parseInt(id.trim()));
+      
+      if (amenityIds.length === 0) {
+        return [];
+      }
+
+      // Get amenity details for each ID
+      const placeholders = amenityIds.map(() => '?').join(',');
+      const [amenityDetails] = await db.execute(
+        `SELECT id, name, icon FROM hotel_amenity WHERE id IN (${placeholders})`,
+        amenityIds
+      );
+
+      return amenityDetails.map(amenity => ({
+        id: roomAmenity.id,
+        room_id: roomAmenity.room_id,
+        amenity_id: amenity.id,
+        name: amenity.name,
+        icon: amenity.icon,
+        room_number: roomAmenity.room_number,
+        room_title: roomAmenity.room_title,
+        hotel_name: roomAmenity.hotel_name,
+        room_type_name: roomAmenity.room_type_name,
+        created_at: roomAmenity.created_at,
+        updated_at: roomAmenity.updated_at
+      }));
+    } catch (error) {
+      throw new Error(`Failed to fetch room amenities by room ID: ${error.message}`);
+    }
+  }
+
   static async findById(id) {
     try {
       const [rows] = await db.execute(
@@ -173,39 +248,48 @@ class HotelRoomAmenity {
           hra.amenity_id,
           hra.created_at,
           hra.updated_at,
-          ha.name,
-          ha.icon,
           hr.room_number,
           hr.title as room_title,
+          hr.room_type_id,
+          h.id as hotel_id,
+          h.name as hotel_name,
+          hrt.name as room_type_name
         FROM hotel_room_amenity hra 
-        JOIN hotel_amenity ha ON hra.amenity_id = ha.id 
         JOIN hotel_room hr ON hra.room_id = hr.id
+        JOIN hotel_room_type hrt ON hr.room_type_id = hrt.id
+        JOIN hotel h ON hrt.hotel_id = h.id
         WHERE hra.id = ?`,
         [id]
       );
-      return rows.length > 0 ? rows[0] : null;
+
+      if (rows.length === 0) {
+        return null;
+      }
+
+      const roomAmenity = rows[0];
+      const amenityIds = roomAmenity.amenity_id.split(',').map(id => parseInt(id.trim()));
+      
+      if (amenityIds.length === 0) {
+        return {
+          ...roomAmenity,
+          amenities: []
+        };
+      }
+
+      // Get amenity details for each ID
+      const placeholders = amenityIds.map(() => '?').join(',');
+      const [amenityDetails] = await db.execute(
+        `SELECT id, name, icon FROM hotel_amenity WHERE id IN (${placeholders})`,
+        amenityIds
+      );
+
+      return {
+        ...roomAmenity,
+        amenities: amenityDetails
+      };
     } catch (error) {
       throw new Error(`Failed to fetch room amenity: ${error.message}`);
     }
-  }
-
-  // Keep the original method for backward compatibility
-  static async findByRoomId(roomId) {
-    const [rows] = await db.execute(
-      `SELECT 
-        hra.id,
-        hra.room_id,
-        hra.amenity_id,
-        hra.created_at,
-        hra.updated_at,
-        ha.name,
-        ha.icon
-      FROM hotel_room_amenity hra 
-      JOIN hotel_amenity ha ON hra.amenity_id = ha.id 
-      WHERE hra.room_id = ?`,
-      [roomId]
-    );
-    return rows;
   }
 
   static async delete(id) {
